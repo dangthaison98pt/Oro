@@ -102,7 +102,7 @@
 # Pcniado <bratuspro2137@gmail.com>, 2025.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-07-13 12:01+0000\n"
@@ -4439,11 +4439,11 @@ msgstr "Światło"
 msgid "Visible"
 msgstr "Widoczny"
 
-msgid "glTF to Godot Expression"
-msgstr "Wyrażenie glTF do Godot"
+msgid "glTF to Oro Expression"
+msgstr "Wyrażenie glTF do Oro"
 
-msgid "Godot to glTF Expression"
-msgstr "Wyrażenie Godot do glTF"
+msgid "Oro to glTF Expression"
+msgstr "Wyrażenie Oro do glTF"
 
 msgid "Node Paths"
 msgstr "Ścieżki węzłów"
@@ -4463,7 +4463,7 @@ msgstr "Złącza"
 msgid "Roots"
 msgstr "Korzenie"
 
-msgid "Godot Bone Node"
+msgid "Oro Bone Node"
 msgstr "Węzeł kości Godota"
 
 msgid "Skin Root"
@@ -4475,8 +4475,8 @@ msgstr "Oryginał złączy"
 msgid "Non Joints"
 msgstr "Nie-złącza"
 
-msgid "Godot Skin"
-msgstr "Skórka Godot"
+msgid "Oro Skin"
+msgstr "Skórka Oro"
 
 msgid "Src Image"
 msgstr "Obraz źródłowy"
@@ -5315,7 +5315,7 @@ msgstr "Host zdalnego debugowania po Wi-Fi"
 msgid "Splash Screen"
 msgstr "Ekran powitalny"
 
-msgid "Disable Godot Boot Splash"
+msgid "Disable Oro Boot Splash"
 msgstr "Wyłącz ekran uruchomienia Godota"
 
 msgid "Background Color"
@@ -5852,7 +5852,7 @@ msgstr "Ikona 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Rozmiar puli Emscripten"
 
-msgid "Godot Pool Size"
+msgid "Oro Pool Size"
 msgstr "Rozmiar puli Godota"
 
 msgid "Windows"

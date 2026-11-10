@@ -11,7 +11,7 @@
 # Zurabi Gaprindashvili <zurabigaprindashvili@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine editor interface\n"
+"Project-Id-Version: Oro Engine editor interface\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-07-21 11:50+0000\n"
@@ -2439,8 +2439,8 @@ msgstr "დატოვება"
 msgid "Enable Delta Encoding"
 msgstr "დელტაკოდირების ჩართვა"
 
-msgid "Godot Project Pack"
-msgstr "Godot-ის პროექტების ნაკრები"
+msgid "Oro Project Pack"
+msgstr "Oro-ის პროექტების ნაკრები"
 
 msgid "Features"
 msgstr "თვისებები"

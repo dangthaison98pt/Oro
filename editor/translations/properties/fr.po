@@ -165,7 +165,7 @@
 # phylaine MacKendal <phylaine@mailo.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-06-29 15:01+0000\n"
@@ -4502,11 +4502,11 @@ msgstr "Lumière"
 msgid "Visible"
 msgstr "Visible"
 
-msgid "glTF to Godot Expression"
-msgstr "Expression glTF vers Godot"
+msgid "glTF to Oro Expression"
+msgstr "Expression glTF vers Oro"
 
-msgid "Godot to glTF Expression"
-msgstr "Expression Godot vers glTF"
+msgid "Oro to glTF Expression"
+msgstr "Expression Oro vers glTF"
 
 msgid "Node Paths"
 msgstr "Chemins de nœud"
@@ -4526,8 +4526,8 @@ msgstr "Jointures"
 msgid "Roots"
 msgstr "Racines"
 
-msgid "Godot Bone Node"
-msgstr "Nœud d'os de Godot"
+msgid "Oro Bone Node"
+msgstr "Nœud d'os de Oro"
 
 msgid "Skin Root"
 msgstr "Racine de l'enveloppe"
@@ -4538,8 +4538,8 @@ msgstr "Jointure à l'original"
 msgid "Non Joints"
 msgstr "Non jointures"
 
-msgid "Godot Skin"
-msgstr "Enveloppe Godot"
+msgid "Oro Skin"
+msgstr "Enveloppe Oro"
 
 msgid "Src Image"
 msgstr "Image source"
@@ -5378,8 +5378,8 @@ msgstr "Hôte de débogage à distance par Wifi"
 msgid "Splash Screen"
 msgstr "Fenêtre surgissante"
 
-msgid "Disable Godot Boot Splash"
-msgstr "Désactiver l'écran surgissant au démarrage de Godot"
+msgid "Disable Oro Boot Splash"
+msgstr "Désactiver l'écran surgissant au démarrage de Oro"
 
 msgid "Background Color"
 msgstr "Couleur d’arrière-plan"
@@ -5915,8 +5915,8 @@ msgstr "Icône 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Place allouée pour Emscripten"
 
-msgid "Godot Pool Size"
-msgstr "Taille de Pool de Godot"
+msgid "Oro Pool Size"
+msgstr "Taille de Pool de Oro"
 
 msgid "Windows"
 msgstr "Windows"

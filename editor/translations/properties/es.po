@@ -127,7 +127,7 @@
 # "M. Campos" <visual.design.90@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-08-01 18:57+0000\n"
@@ -4462,11 +4462,11 @@ msgstr "Luz"
 msgid "Visible"
 msgstr "Visible"
 
-msgid "glTF to Godot Expression"
-msgstr "Expresión glTF a Godot"
+msgid "glTF to Oro Expression"
+msgstr "Expresión glTF an Oro"
 
-msgid "Godot to glTF Expression"
-msgstr "Expresión Godot a glTF"
+msgid "Oro to glTF Expression"
+msgstr "Expresión Oro a glTF"
 
 msgid "Node Paths"
 msgstr "Rutas de Nodos"
@@ -4486,8 +4486,8 @@ msgstr "Articulaciones"
 msgid "Roots"
 msgstr "Raíces"
 
-msgid "Godot Bone Node"
-msgstr "Nodo de Huesos de Godot"
+msgid "Oro Bone Node"
+msgstr "Nodo de Huesos de Oro"
 
 msgid "Skin Root"
 msgstr "Raíz de la Skin"
@@ -4498,8 +4498,8 @@ msgstr "Articulaciones Originales"
 msgid "Non Joints"
 msgstr "Sin Articulaciones"
 
-msgid "Godot Skin"
-msgstr "Skin de Godot"
+msgid "Oro Skin"
+msgstr "Skin de Oro"
 
 msgid "Src Image"
 msgstr "Origen de la Imagen"
@@ -5338,8 +5338,8 @@ msgstr "Host Remoto usando Wi-fi"
 msgid "Splash Screen"
 msgstr "Pantalla de Presentación"
 
-msgid "Disable Godot Boot Splash"
-msgstr "Desactivar la Pantalla de Inicio de Godot"
+msgid "Disable Oro Boot Splash"
+msgstr "Desactivar la Pantalla de Inicio de Oro"
 
 msgid "Background Color"
 msgstr "Color de Fondo"
@@ -5875,8 +5875,8 @@ msgstr "Ícono 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Tamaño de Pool de Emscripten"
 
-msgid "Godot Pool Size"
-msgstr "Tamaño de Pool de Godot"
+msgid "Oro Pool Size"
+msgstr "Tamaño de Pool de Oro"
 
 msgid "Windows"
 msgstr "Windows"

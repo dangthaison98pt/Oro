@@ -63,7 +63,7 @@
 # Arif Budiman <arifpedia@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-05-31 22:43+0000\n"
@@ -4398,11 +4398,11 @@ msgstr "Cahaya"
 msgid "Visible"
 msgstr "Terlihat"
 
-msgid "glTF to Godot Expression"
-msgstr "Ekspresi glTF ke Godot"
+msgid "glTF to Oro Expression"
+msgstr "Ekspresi glTF ke Oro"
 
-msgid "Godot to glTF Expression"
-msgstr "Ekspresi Godot ke glTF"
+msgid "Oro to glTF Expression"
+msgstr "Ekspresi Oro ke glTF"
 
 msgid "Node Paths"
 msgstr "Path Node"
@@ -4422,8 +4422,8 @@ msgstr "Sendi"
 msgid "Roots"
 msgstr "Root"
 
-msgid "Godot Bone Node"
-msgstr "Node Tulang Godot"
+msgid "Oro Bone Node"
+msgstr "Node Tulang Oro"
 
 msgid "Skin Root"
 msgstr "Root Skin"
@@ -4434,8 +4434,8 @@ msgstr "Sendi Asli"
 msgid "Non Joints"
 msgstr "Non Sendi"
 
-msgid "Godot Skin"
-msgstr "Skin Godot"
+msgid "Oro Skin"
+msgstr "Skin Oro"
 
 msgid "Src Image"
 msgstr "Gambar Sumber"
@@ -5274,8 +5274,8 @@ msgstr "Host Debug Jarak Jauh Wi-Fi"
 msgid "Splash Screen"
 msgstr "Layar Splash"
 
-msgid "Disable Godot Boot Splash"
-msgstr "Nonaktifkan Splash Boot Godot"
+msgid "Disable Oro Boot Splash"
+msgstr "Nonaktifkan Splash Boot Oro"
 
 msgid "Background Color"
 msgstr "Warna Latar belakang"
@@ -5811,8 +5811,8 @@ msgstr "Ikon 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Ukuran Pool Emscripten"
 
-msgid "Godot Pool Size"
-msgstr "Ukuran Pool Godot"
+msgid "Oro Pool Size"
+msgstr "Ukuran Pool Oro"
 
 msgid "Windows"
 msgstr "Windows"

@@ -29,7 +29,7 @@
 # Repa <youme.ytv@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-07-17 12:17+0000\n"
@@ -4202,11 +4202,11 @@ msgstr "Светъл"
 msgid "Visible"
 msgstr "Видим"
 
-msgid "glTF to Godot Expression"
-msgstr "glTF към Godot Израз"
+msgid "glTF to Oro Expression"
+msgstr "glTF към Oro Израз"
 
-msgid "Godot to glTF Expression"
-msgstr "Godot към glTF Израз"
+msgid "Oro to glTF Expression"
+msgstr "Oro към glTF Израз"
 
 msgid "Node Paths"
 msgstr "Пътища на Възели"
@@ -4226,8 +4226,8 @@ msgstr "Стави"
 msgid "Roots"
 msgstr "Корени"
 
-msgid "Godot Bone Node"
-msgstr "Godot Кост Възел"
+msgid "Oro Bone Node"
+msgstr "Oro Кост Възел"
 
 msgid "Skin Root"
 msgstr "Root Кожа"
@@ -4238,8 +4238,8 @@ msgstr "Оригинални Стави"
 msgid "Non Joints"
 msgstr "Не-Стави"
 
-msgid "Godot Skin"
-msgstr "Godot Кожа"
+msgid "Oro Skin"
+msgstr "Oro Кожа"
 
 msgid "Src Image"
 msgstr "Източник на Изображение"

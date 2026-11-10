@@ -40,7 +40,7 @@
 # The Earth <winterwolfvn123@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-07-26 09:02+0000\n"
@@ -1995,8 +1995,8 @@ msgstr "Ánh sáng"
 msgid "Roots"
 msgstr "Gốc"
 
-msgid "Godot Skin"
-msgstr "Godot Skin"
+msgid "Oro Skin"
+msgstr "Oro Skin"
 
 msgid "Sampler"
 msgstr "Trình lấy mẫu"

@@ -461,7 +461,7 @@ void VersionControlEditorPlugin::_discard_file(const String &p_file_path, Editor
 		CHECK_PLUGIN_INITIALIZED();
 		EditorVCSInterface::get_singleton()->discard_file(p_file_path);
 	}
-	// FIXIT: The project.godot file shows weird behavior
+	// FIXIT: The project.oro file shows weird behavior
 	EditorFileSystem::get_singleton()->update_file(p_file_path);
 }
 

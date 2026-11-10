@@ -24,7 +24,7 @@
 # bane <a840wbane@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-06-09 11:32+0000\n"
@@ -3453,10 +3453,10 @@ msgstr "प्रकाश"
 msgid "Visible"
 msgstr "दृश्यमान"
 
-msgid "glTF to Godot Expression"
-msgstr "glTF से Godot अभिव्यक्ति"
+msgid "glTF to Oro Expression"
+msgstr "glTF से Oro अभिव्यक्ति"
 
-msgid "Godot to glTF Expression"
+msgid "Oro to glTF Expression"
 msgstr "गोडोट से glTF अभिव्यक्ति"
 
 msgid "Object Model Type"
@@ -3471,7 +3471,7 @@ msgstr "त्वचा की जड़"
 msgid "Joints Original"
 msgstr "जोड़ों का मूल रूप"
 
-msgid "Godot Skin"
+msgid "Oro Skin"
 msgstr "गोडोट त्वचा"
 
 msgid "Src Image"

@@ -200,7 +200,7 @@ public:
 			for (unsigned int current_index = 0; RenamesMap3To4::project_settings_renames[current_index][0]; current_index++) {
 				project_settings_regexes.push_back(memnew(RegEx(String("\\b") + RenamesMap3To4::project_settings_renames[current_index][0] + "\\b")));
 			}
-			// Project Settings in project.godot.
+			// Project Settings in project.oro.
 			for (unsigned int current_index = 0; RenamesMap3To4::project_godot_renames[current_index][0]; current_index++) {
 				project_godot_regexes.push_back(memnew(RegEx(String("\\b") + RenamesMap3To4::project_godot_renames[current_index][0] + "\\b")));
 			}
@@ -292,16 +292,16 @@ bool ProjectConverter3To4::convert() {
 	{
 		String converter_text = "; Project was converted by built-in tool to Godot 4";
 
-		ERR_FAIL_COND_V_MSG(!FileAccess::exists("project.godot"), false, "Current working directory doesn't contain a \"project.godot\" file for a Godot 3 project.");
+		ERR_FAIL_COND_V_MSG(!FileAccess::exists("project.oro"), false, "Current working directory doesn't contain a \"project.oro\" file for a Godot 3 project.");
 
 		Error err = OK;
-		String project_godot_content = FileAccess::get_file_as_string("project.godot", &err);
+		String project_godot_content = FileAccess::get_file_as_string("project.oro", &err);
 
-		ERR_FAIL_COND_V_MSG(err != OK, false, "Unable to read \"project.godot\".");
+		ERR_FAIL_COND_V_MSG(err != OK, false, "Unable to read \"project.oro\".");
 		ERR_FAIL_COND_V_MSG(project_godot_content.contains(converter_text), false, "Project was already converted with this tool.");
 
-		Ref<FileAccess> file = FileAccess::open("project.godot", FileAccess::WRITE);
-		ERR_FAIL_COND_V_MSG(file.is_null(), false, "Unable to open \"project.godot\".");
+		Ref<FileAccess> file = FileAccess::open("project.oro", FileAccess::WRITE);
+		ERR_FAIL_COND_V_MSG(file.is_null(), false, "Unable to open \"project.oro\".");
 
 		file->store_string(converter_text + "\n" + project_godot_content);
 	}
@@ -408,7 +408,7 @@ bool ProjectConverter3To4::convert() {
 				rename_common(RenamesMap3To4::builtin_types_renames, reg_container.builtin_types_regexes, source_lines);
 
 				custom_rename(source_lines, "\\.shader", ".gdshader");
-			} else if (file_name.ends_with("project.godot")) {
+			} else if (file_name.ends_with("project.oro")) {
 				rename_common(RenamesMap3To4::project_godot_renames, reg_container.project_godot_regexes, source_lines);
 				rename_common(RenamesMap3To4::builtin_types_renames, reg_container.builtin_types_regexes, source_lines);
 				rename_input_map_scancode(source_lines, reg_container);
@@ -499,12 +499,12 @@ bool ProjectConverter3To4::validate_conversion() {
 	{
 		String conventer_text = "; Project was converted by built-in tool to Godot 4";
 
-		ERR_FAIL_COND_V_MSG(!FileAccess::exists("project.godot"), false, "Current directory doesn't contain any Godot 3 project");
+		ERR_FAIL_COND_V_MSG(!FileAccess::exists("project.oro"), false, "Current directory doesn't contain any Godot 3 project");
 
 		Error err = OK;
-		String project_godot_content = FileAccess::get_file_as_string("project.godot", &err);
+		String project_godot_content = FileAccess::get_file_as_string("project.oro", &err);
 
-		ERR_FAIL_COND_V_MSG(err != OK, false, "Failed to read content of \"project.godot\" file.");
+		ERR_FAIL_COND_V_MSG(err != OK, false, "Failed to read content of \"project.oro\" file.");
 		ERR_FAIL_COND_V_MSG(project_godot_content.contains(conventer_text), false, "Project already was converted with this tool.");
 	}
 
@@ -595,7 +595,7 @@ bool ProjectConverter3To4::validate_conversion() {
 				changed_elements.append_array(check_for_rename_common(RenamesMap3To4::builtin_types_renames, reg_container.builtin_types_regexes, lines));
 
 				changed_elements.append_array(check_for_custom_rename(lines, "\\.shader", ".gdshader"));
-			} else if (file_name.ends_with("project.godot")) {
+			} else if (file_name.ends_with("project.oro")) {
 				changed_elements.append_array(check_for_rename_common(RenamesMap3To4::project_godot_renames, reg_container.project_godot_regexes, lines));
 				changed_elements.append_array(check_for_rename_common(RenamesMap3To4::builtin_types_renames, reg_container.builtin_types_regexes, lines));
 				changed_elements.append_array(check_for_rename_input_map_scancode(lines, reg_container));
@@ -663,7 +663,7 @@ Vector<String> ProjectConverter3To4::check_for_files() {
 			String file_name = dir->_get_next();
 
 			while (file_name != "") {
-				if (file_name == ".git" || file_name == ".godot") {
+				if (file_name == ".git" || file_name == ".oro") {
 					file_name = dir->_get_next();
 					continue;
 				}
@@ -671,7 +671,7 @@ Vector<String> ProjectConverter3To4::check_for_files() {
 					directories_to_check.append(current_dir.path_join(file_name) + "/");
 				} else {
 					bool proper_extension = false;
-					if (file_name.ends_with(".gd") || file_name.ends_with(".shader") || file_name.ends_with(".gdshader") || file_name.ends_with(".tscn") || file_name.ends_with(".tres") || file_name.ends_with(".godot") || file_name.ends_with(".cs") || file_name.ends_with(".csproj") || file_name.ends_with(".import")) {
+					if (file_name.ends_with(".gd") || file_name.ends_with(".shader") || file_name.ends_with(".gdshader") || file_name.ends_with(".tscn") || file_name.ends_with(".tres") || file_name.ends_with(".oro") || file_name.ends_with(".cs") || file_name.ends_with(".csproj") || file_name.ends_with(".import")) {
 						proper_extension = true;
 					}
 

@@ -109,7 +109,7 @@
 # Efe Yılmaz <iceburn322@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-07-11 11:02+0000\n"
@@ -3964,11 +3964,11 @@ msgstr "Işık"
 msgid "Visible"
 msgstr "Görünür"
 
-msgid "glTF to Godot Expression"
-msgstr "glTF'den Godot İfadesi'ne"
+msgid "glTF to Oro Expression"
+msgstr "glTF'den Oro İfadesi'ne"
 
-msgid "Godot to glTF Expression"
-msgstr "Godot'dan glTF İfadesi'ne"
+msgid "Oro to glTF Expression"
+msgstr "Oro'dan glTF İfadesi'ne"
 
 msgid "Node Paths"
 msgstr "Düğüm Yolları"
@@ -3988,8 +3988,8 @@ msgstr "Eklemler"
 msgid "Roots"
 msgstr "Kökler"
 
-msgid "Godot Bone Node"
-msgstr "Godot Kemik Düğümü"
+msgid "Oro Bone Node"
+msgstr "Oro Kemik Düğümü"
 
 msgid "Skin Root"
 msgstr "Deri Kökü"
@@ -4000,8 +4000,8 @@ msgstr "Eklemler Asıl"
 msgid "Non Joints"
 msgstr "Eklem Olmayanlar"
 
-msgid "Godot Skin"
-msgstr "Godot Kaplaması"
+msgid "Oro Skin"
+msgstr "Oro Kaplaması"
 
 msgid "Src Image"
 msgstr "Kaynak Resim"

@@ -276,7 +276,7 @@ Ref<GLTFObjectModelProperty> GLTFDocumentExtensionPhysics::import_object_model_p
 				ret->append_path_to_property(node_path, "inertia");
 				ret->set_types(Variant::VECTOR3, GLTFObjectModelProperty::GLTF_OBJECT_MODEL_TYPE_FLOAT3);
 			} else if (prop_name == "inertiaOrientation") {
-				WARN_PRINT("GLTF Physics: The 'inertiaOrientation' property is not supported by Godot.");
+				WARN_PRINT("GLTF Physics: The 'inertiaOrientation' property is not supported by Oro.");
 			} else {
 				// Not something we handle, return without appending a NodePath.
 				return ret;

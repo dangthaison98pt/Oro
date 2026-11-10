@@ -6,7 +6,7 @@
 # Aindriú Mac Giolla Eoin <aindriu80@gmail.com>, 2024, 2025, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "PO-Revision-Date: 2026-06-13 15:46+0000\n"
 "Last-Translator: Aindriú Mac Giolla Eoin <aindriu80@gmail.com>\n"
@@ -4340,11 +4340,11 @@ msgstr "Solas"
 msgid "Visible"
 msgstr "Infheicthe"
 
-msgid "glTF to Godot Expression"
-msgstr "glTF a Slonn Godot"
+msgid "glTF to Oro Expression"
+msgstr "glTF a Slonn Oro"
 
-msgid "Godot to glTF Expression"
-msgstr "Godot go glTF Slonn"
+msgid "Oro to glTF Expression"
+msgstr "Oro go glTF Slonn"
 
 msgid "Node Paths"
 msgstr "Cosáin Nód"
@@ -4364,8 +4364,8 @@ msgstr "Ailt"
 msgid "Roots"
 msgstr "Fréamhacha"
 
-msgid "Godot Bone Node"
-msgstr "Nód Cnámh Godot"
+msgid "Oro Bone Node"
+msgstr "Nód Cnámh Oro"
 
 msgid "Skin Root"
 msgstr "Fréamh an Chraicinn"
@@ -4376,8 +4376,8 @@ msgstr "Ailt Bhunaidh"
 msgid "Non Joints"
 msgstr "Neamh-Ailt"
 
-msgid "Godot Skin"
-msgstr "Craiceann Godot"
+msgid "Oro Skin"
+msgstr "Craiceann Oro"
 
 msgid "Src Image"
 msgstr "Íomhá Src"
@@ -5216,8 +5216,8 @@ msgstr "Óstach Dífhabhtaithe Cianda Wi-Fi"
 msgid "Splash Screen"
 msgstr "Scáileán Splais"
 
-msgid "Disable Godot Boot Splash"
-msgstr "Díchumasaigh Godot Bútáil Splais"
+msgid "Disable Oro Boot Splash"
+msgstr "Díchumasaigh Oro Bútáil Splais"
 
 msgid "Background Color"
 msgstr "Cúlra Dath"
@@ -5753,8 +5753,8 @@ msgstr "Deilbhín 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Méid Linn Snámha Emscripten"
 
-msgid "Godot Pool Size"
-msgstr "Méid Linn Snámha Godot"
+msgid "Oro Pool Size"
+msgstr "Méid Linn Snámha Oro"
 
 msgid "Windows"
 msgstr "Windows"

@@ -903,7 +903,7 @@
 			<return type="void" />
 			<description>
 				Prints one or more arguments to strings in the best way possible to the OS terminal. Unlike [method print], no newline is automatically added at the end.
-				[b]Note:[/b] The OS terminal is [i]not[/i] the same as the editor's Output dock. The output sent to the OS terminal can be seen when running Godot from a terminal. On Windows, this requires using the [code]console.exe[/code] executable.
+				[b]Note:[/b] The OS terminal is [i]not[/i] the same as the editor's Output dock. The output sent to the OS terminal can be seen when running Oro from a terminal. On Windows, this requires using the [code]console.exe[/code] executable.
 				[codeblocks]
 				[gdscript]
 				# Prints "ABC" to terminal.
@@ -951,7 +951,7 @@
 		<method name="push_error" qualifiers="vararg">
 			<return type="void" />
 			<description>
-				Pushes an error message to Godot's built-in debugger and to the OS terminal.
+				Pushes an error message to Oro's built-in debugger and to the OS terminal.
 				[codeblocks]
 				[gdscript]
 				push_error("test error") # Prints "test error" to debugger and terminal as an error.
@@ -966,7 +966,7 @@
 		<method name="push_warning" qualifiers="vararg">
 			<return type="void" />
 			<description>
-				Pushes a warning message to Godot's built-in debugger and to the OS terminal.
+				Pushes a warning message to Oro's built-in debugger and to the OS terminal.
 				[codeblocks]
 				[gdscript]
 				push_warning("test warning") # Prints "test warning" to debugger and terminal as a warning.

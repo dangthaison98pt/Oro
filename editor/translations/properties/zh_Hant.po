@@ -56,7 +56,7 @@
 # Dachi <hello.ch126@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Godot Engine properties\n"
+"Project-Id-Version: Oro Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-08-04 12:17+0000\n"
@@ -4142,11 +4142,11 @@ msgstr "燈光"
 msgid "Visible"
 msgstr "可見"
 
-msgid "glTF to Godot Expression"
-msgstr "glTF 到 Godot 表達式"
+msgid "glTF to Oro Expression"
+msgstr "glTF 到 Oro 表達式"
 
-msgid "Godot to glTF Expression"
-msgstr "Godot 到 glTF 運算式"
+msgid "Oro to glTF Expression"
+msgstr "Oro 到 glTF 運算式"
 
 msgid "Node Paths"
 msgstr "節點路徑"
@@ -4166,8 +4166,8 @@ msgstr "關節"
 msgid "Roots"
 msgstr "根"
 
-msgid "Godot Bone Node"
-msgstr "Godot 骨骼節點"
+msgid "Oro Bone Node"
+msgstr "Oro 骨骼節點"
 
 msgid "Skin Root"
 msgstr "蒙皮根"
@@ -4178,8 +4178,8 @@ msgstr "原關節"
 msgid "Non Joints"
 msgstr "非關節"
 
-msgid "Godot Skin"
-msgstr "Godot 外觀"
+msgid "Oro Skin"
+msgstr "Oro 外觀"
 
 msgid "Src Image"
 msgstr "來源圖像"
@@ -5471,8 +5471,8 @@ msgstr "圖示 512×512"
 msgid "Emscripten Pool Size"
 msgstr "Emscripten 記憶體池大小"
 
-msgid "Godot Pool Size"
-msgstr "Godot 記憶體池大小"
+msgid "Oro Pool Size"
+msgstr "Oro 記憶體池大小"
 
 msgid "Windows"
 msgstr "Windows"

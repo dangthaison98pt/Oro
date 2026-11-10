@@ -354,7 +354,7 @@ Vector<String> CSharpLanguage::get_string_delimiters() const {
 static String get_base_class_name(const String &p_base_class_name, const String p_class_name) {
 	String base_class = pascal_to_pascal_case(p_base_class_name);
 	if (p_class_name == base_class) {
-		base_class = "Godot." + base_class;
+		base_class = "Oro." + base_class;
 	}
 	return base_class;
 }

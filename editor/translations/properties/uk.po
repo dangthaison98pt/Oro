@@ -44,7 +44,7 @@
 # User2068 <user603849745775@proton.me>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Ukrainian (Godot Engine)\n"
+"Project-Id-Version: Ukrainian (Oro Engine)\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-06-10 12:02+0000\n"
@@ -4380,11 +4380,11 @@ msgstr "Світло"
 msgid "Visible"
 msgstr "Видимий"
 
-msgid "glTF to Godot Expression"
-msgstr "glTF до виразу Godot"
+msgid "glTF to Oro Expression"
+msgstr "glTF до виразу Oro"
 
-msgid "Godot to glTF Expression"
-msgstr "Вираз Godot до glTF"
+msgid "Oro to glTF Expression"
+msgstr "Вираз Oro до glTF"
 
 msgid "Node Paths"
 msgstr "Шляхи вузлів"
@@ -4404,7 +4404,7 @@ msgstr "Суглоби"
 msgid "Roots"
 msgstr "Корені"
 
-msgid "Godot Bone Node"
+msgid "Oro Bone Node"
 msgstr "Отримати вузол сцени"
 
 msgid "Skin Root"
@@ -4416,8 +4416,8 @@ msgstr "Початок з'єднання"
 msgid "Non Joints"
 msgstr "Без з'єднань"
 
-msgid "Godot Skin"
-msgstr "Скін Godot"
+msgid "Oro Skin"
+msgstr "Скін Oro"
 
 msgid "Src Image"
 msgstr "Початкове зображення"
@@ -5256,8 +5256,8 @@ msgstr "Хост віддаленого налагодження Wi-Fi"
 msgid "Splash Screen"
 msgstr "Заставка"
 
-msgid "Disable Godot Boot Splash"
-msgstr "Вимкнути заставку завантаження Godot"
+msgid "Disable Oro Boot Splash"
+msgstr "Вимкнути заставку завантаження Oro"
 
 msgid "Background Color"
 msgstr "Колір тла"
@@ -5793,8 +5793,8 @@ msgstr "Піктограма 512⨯12"
 msgid "Emscripten Pool Size"
 msgstr "Розмір пулу Емскрипти"
 
-msgid "Godot Pool Size"
-msgstr "Розмір басейну Godot"
+msgid "Oro Pool Size"
+msgstr "Розмір басейну Oro"
 
 msgid "Windows"
 msgstr "Windows"

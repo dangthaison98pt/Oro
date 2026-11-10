@@ -39,7 +39,7 @@ static OS_Windows *os = nullptr;
 static GodotInstance *instance = nullptr;
 
 GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func) {
-	ERR_FAIL_COND_V_MSG(instance != nullptr, nullptr, "Only one Godot Instance may be created at a time.");
+	ERR_FAIL_COND_V_MSG(instance != nullptr, nullptr, "Only one Oro Instance may be created at a time.");
 
 	os = new OS_Windows(GetModuleHandle(nullptr));
 
