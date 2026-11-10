@@ -39,7 +39,7 @@ static OS_MacOS *os = nullptr;
 static GodotInstance *instance = nullptr;
 
 GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func) {
-	ERR_FAIL_COND_V_MSG(instance != nullptr, nullptr, "Only one Oro Instance may be created.");
+	ERR_FAIL_COND_V_MSG(instance != nullptr, nullptr, "Only one Orostride Instance may be created.");
 
 	uint32_t remaining_args = p_argc - 1;
 	os = new OS_MacOS_NSApp(p_argv[0], remaining_args, remaining_args > 0 ? &p_argv[1] : nullptr);

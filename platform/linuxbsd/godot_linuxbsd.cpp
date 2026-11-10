@@ -75,15 +75,15 @@ int main(int argc, char *argv[]) {
 	if (!(cpuinfo[2] & (1 << 20))) {
 		printf("A CPU with SSE4.2 instruction set support is required.\n");
 
-		int ret = system("zenity --warning --title \"Oro Engine\" --text \"A CPU with SSE4.2 instruction set support is required.\" 2> /dev/null");
+		int ret = system("zenity --warning --title \"Orostride Engine\" --text \"A CPU with SSE4.2 instruction set support is required.\" 2> /dev/null");
 		if (ret != 0) {
-			ret = system("kdialog --title \"Oro Engine\" --sorry \"A CPU with SSE4.2 instruction set support is required.\" 2> /dev/null");
+			ret = system("kdialog --title \"Orostride Engine\" --sorry \"A CPU with SSE4.2 instruction set support is required.\" 2> /dev/null");
 		}
 		if (ret != 0) {
-			ret = system("Xdialog --title \"Oro Engine\" --msgbox \"A CPU with SSE4.2 instruction set support is required.\" 0 0 2> /dev/null");
+			ret = system("Xdialog --title \"Orostride Engine\" --msgbox \"A CPU with SSE4.2 instruction set support is required.\" 0 0 2> /dev/null");
 		}
 		if (ret != 0) {
-			ret = system("xmessage -center -title \"Oro Engine\" \"A CPU with SSE4.2 instruction set support is required.\" 2> /dev/null");
+			ret = system("xmessage -center -title \"Orostride Engine\" \"A CPU with SSE4.2 instruction set support is required.\" 2> /dev/null");
 		}
 		abort();
 	}

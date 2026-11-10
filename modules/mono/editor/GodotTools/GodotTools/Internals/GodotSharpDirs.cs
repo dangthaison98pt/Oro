@@ -79,7 +79,7 @@ namespace GodotTools.Internals
             else if (!slnParentDir.StartsWith("res://", StringComparison.Ordinal))
                 slnParentDir = "res://" + slnParentDir;
 
-            // The csproj should be in the same folder as project.oro.
+            // The csproj should be in the same folder as project.orostride.
             string csprojParentDir = "res://";
 
             // Set csproj path first and use it to find the sln/slnx file with the assembly
@@ -182,7 +182,7 @@ namespace GodotTools.Internals
             {
                 if (_projectCsProjPath == null)
                     DetermineProjectLocation();
-                return Path.Combine(Path.GetDirectoryName(_projectCsProjPath)!, ".oro", "mono", "temp", "bin");
+                return Path.Combine(Path.GetDirectoryName(_projectCsProjPath)!, ".orostride", "mono", "temp", "bin");
             }
         }
 

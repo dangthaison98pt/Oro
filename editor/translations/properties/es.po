@@ -127,7 +127,7 @@
 # "M. Campos" <visual.design.90@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oro Engine properties\n"
+"Project-Id-Version: Orostride Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-08-01 18:57+0000\n"
@@ -4462,11 +4462,11 @@ msgstr "Luz"
 msgid "Visible"
 msgstr "Visible"
 
-msgid "glTF to Oro Expression"
-msgstr "Expresión glTF an Oro"
+msgid "glTF to Orostride Expression"
+msgstr "Expresión glTF an Orostride"
 
-msgid "Oro to glTF Expression"
-msgstr "Expresión Oro a glTF"
+msgid "Orostride to glTF Expression"
+msgstr "Expresión Orostride a glTF"
 
 msgid "Node Paths"
 msgstr "Rutas de Nodos"
@@ -4486,8 +4486,8 @@ msgstr "Articulaciones"
 msgid "Roots"
 msgstr "Raíces"
 
-msgid "Oro Bone Node"
-msgstr "Nodo de Huesos de Oro"
+msgid "Orostride Bone Node"
+msgstr "Nodo de Huesos de Orostride"
 
 msgid "Skin Root"
 msgstr "Raíz de la Skin"
@@ -4498,8 +4498,8 @@ msgstr "Articulaciones Originales"
 msgid "Non Joints"
 msgstr "Sin Articulaciones"
 
-msgid "Oro Skin"
-msgstr "Skin de Oro"
+msgid "Orostride Skin"
+msgstr "Skin de Orostride"
 
 msgid "Src Image"
 msgstr "Origen de la Imagen"
@@ -5338,8 +5338,8 @@ msgstr "Host Remoto usando Wi-fi"
 msgid "Splash Screen"
 msgstr "Pantalla de Presentación"
 
-msgid "Disable Oro Boot Splash"
-msgstr "Desactivar la Pantalla de Inicio de Oro"
+msgid "Disable Orostride Boot Splash"
+msgstr "Desactivar la Pantalla de Inicio de Orostride"
 
 msgid "Background Color"
 msgstr "Color de Fondo"
@@ -5875,8 +5875,8 @@ msgstr "Ícono 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Tamaño de Pool de Emscripten"
 
-msgid "Oro Pool Size"
-msgstr "Tamaño de Pool de Oro"
+msgid "Orostride Pool Size"
+msgstr "Tamaño de Pool de Orostride"
 
 msgid "Windows"
 msgstr "Windows"

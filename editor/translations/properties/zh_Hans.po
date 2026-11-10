@@ -103,7 +103,7 @@
 # 张华 <i1tb@qq.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Chinese (Simplified) (Oro Engine)\n"
+"Project-Id-Version: Chinese (Simplified) (Orostride Engine)\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: 2018-01-20 12:15+0200\n"
 "PO-Revision-Date: 2026-06-10 12:02+0000\n"
@@ -4438,11 +4438,11 @@ msgstr "灯光"
 msgid "Visible"
 msgstr "可见"
 
-msgid "glTF to Oro Expression"
-msgstr "glTF 至 Oro 表达式"
+msgid "glTF to Orostride Expression"
+msgstr "glTF 至 Orostride 表达式"
 
-msgid "Oro to glTF Expression"
-msgstr "Oro 至 glTF 表达式"
+msgid "Orostride to glTF Expression"
+msgstr "Orostride 至 glTF 表达式"
 
 msgid "Node Paths"
 msgstr "节点路径"
@@ -4462,8 +4462,8 @@ msgstr "关节"
 msgid "Roots"
 msgstr "根"
 
-msgid "Oro Bone Node"
-msgstr "Oro 骨骼节点"
+msgid "Orostride Bone Node"
+msgstr "Orostride 骨骼节点"
 
 msgid "Skin Root"
 msgstr "蒙皮根"
@@ -4474,8 +4474,8 @@ msgstr "原关节"
 msgid "Non Joints"
 msgstr "非关节"
 
-msgid "Oro Skin"
-msgstr "Oro 蒙皮"
+msgid "Orostride Skin"
+msgstr "Orostride 蒙皮"
 
 msgid "Src Image"
 msgstr "来源图像"
@@ -5314,8 +5314,8 @@ msgstr "Wi-Fi 远程调试主机"
 msgid "Splash Screen"
 msgstr "启动画面"
 
-msgid "Disable Oro Boot Splash"
-msgstr "禁用 Oro 启动画面"
+msgid "Disable Orostride Boot Splash"
+msgstr "禁用 Orostride 启动画面"
 
 msgid "Background Color"
 msgstr "背景色"
@@ -5851,8 +5851,8 @@ msgstr "图标 512×512"
 msgid "Emscripten Pool Size"
 msgstr "Emscripten 池大小"
 
-msgid "Oro Pool Size"
-msgstr "Oro 池大小"
+msgid "Orostride Pool Size"
+msgstr "Orostride 池大小"
 
 msgid "Windows"
 msgstr "Windows"

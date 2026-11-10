@@ -322,7 +322,7 @@ Error GDExtensionLibraryLoader::parse_gdextension_file(const String &p_path) {
 		compatible = GODOT_VERSION_PATCH >= compatibility_minimum[2];
 	}
 	if (!compatible) {
-		ERR_PRINT(vformat("GDExtension only compatible with Oro version %d.%d.%d or later: %s, but your Oro version is %d.%d.%d",
+		ERR_PRINT(vformat("GDExtension only compatible with Orostride version %d.%d.%d or later: %s, but your Orostride version is %d.%d.%d",
 				compatibility_minimum[0], compatibility_minimum[1], compatibility_minimum[2], p_path,
 				GODOT_VERSION_MAJOR, GODOT_VERSION_MINOR, GODOT_VERSION_PATCH));
 		return ERR_INVALID_DATA;
@@ -356,7 +356,7 @@ Error GDExtensionLibraryLoader::parse_gdextension_file(const String &p_path) {
 #endif
 
 		if (!compatible) {
-			ERR_PRINT(vformat("GDExtension only compatible with Oro version %s or earlier: %s, but your Oro version is %d.%d.%d",
+			ERR_PRINT(vformat("GDExtension only compatible with Orostride version %s or earlier: %s, but your Orostride version is %d.%d.%d",
 					compat_string, p_path, GODOT_VERSION_MAJOR, GODOT_VERSION_MINOR, GODOT_VERSION_PATCH));
 			return ERR_INVALID_DATA;
 		}

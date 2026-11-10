@@ -193,7 +193,7 @@ void OpenXRActionMap::create_default_action_sets() {
 	// - the same applies for interaction profiles that are only supported if the relevant extension is supported.
 
 	// Create our Godot action set.
-	Ref<OpenXRActionSet> action_set = OpenXRActionSet::new_action_set("godot", "Oro action set");
+	Ref<OpenXRActionSet> action_set = OpenXRActionSet::new_action_set("godot", "Orostride action set");
 	add_action_set(action_set);
 
 	// Create our actions.

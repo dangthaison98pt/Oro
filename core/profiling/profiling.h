@@ -105,9 +105,9 @@ void godot_cleanup_profiler();
 
 PERFETTO_DEFINE_CATEGORIES(
 		perfetto::Category("godot")
-				.SetDescription("Oro Engine Events"),
+				.SetDescription("Orostride Engine Events"),
 		perfetto::Category("godot_scripting")
-				.SetDescription("Oro Scripting Events"), );
+				.SetDescription("Orostride Scripting Events"), );
 
 // See PERFETTO_INTERNAL_SCOPED_EVENT_FINALIZER
 struct PerfettoGroupedEventEnder {

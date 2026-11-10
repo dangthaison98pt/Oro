@@ -413,7 +413,7 @@ void MobileVRInterface::uninitialize() {
 Dictionary MobileVRInterface::get_system_info() {
 	Dictionary dict;
 
-	dict[SNAME("XRRuntimeName")] = String("Oro mobile VR interface");
+	dict[SNAME("XRRuntimeName")] = String("Orostride mobile VR interface");
 	dict[SNAME("XRRuntimeVersion")] = String("");
 
 	return dict;

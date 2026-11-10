@@ -94,7 +94,7 @@ public:
 	void set_disable_feature(Feature p_feature, bool p_disable);
 	bool is_feature_disabled(Feature p_feature) const;
 
-	// Oro is a 2D-only engine: 3D features and classes are always disabled in the editor.
+	// Orostride is a 2D-only engine: 3D features and classes are always disabled in the editor.
 	static bool is_feature_locked(Feature p_feature);
 	static bool is_class_locked(const StringName &p_class);
 
@@ -158,7 +158,7 @@ class EditorFeatureProfileManager : public AcceptDialog {
 
 	Ref<EditorFeatureProfile> current;
 	Ref<EditorFeatureProfile> edited;
-	// Used when no profile is selected, so that Oro's locked (3D) features still apply.
+	// Used when no profile is selected, so that Orostride's locked (3D) features still apply.
 	Ref<EditorFeatureProfile> default_profile;
 
 	void _erase_selected_profile();

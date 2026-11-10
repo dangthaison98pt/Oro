@@ -177,7 +177,7 @@ private:
 		String platform = _get_platform_name();
 		String arch = Engine::get_singleton()->get_architecture_name();
 		String appname_safe = Path::get_csharp_project_name();
-		String packed_path = "res://.oro/mono/publish/" + arch;
+		String packed_path = "res://.orostride/mono/publish/" + arch;
 #ifdef ANDROID_ENABLED
 		api_assemblies_dir = packed_path;
 		print_verbose(".NET: Android platform detected. Setting api_assemblies_dir directly to pck path: " + api_assemblies_dir);

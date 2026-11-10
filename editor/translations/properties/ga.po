@@ -6,7 +6,7 @@
 # Aindriú Mac Giolla Eoin <aindriu80@gmail.com>, 2024, 2025, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oro Engine properties\n"
+"Project-Id-Version: Orostride Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "PO-Revision-Date: 2026-06-13 15:46+0000\n"
 "Last-Translator: Aindriú Mac Giolla Eoin <aindriu80@gmail.com>\n"
@@ -4340,11 +4340,11 @@ msgstr "Solas"
 msgid "Visible"
 msgstr "Infheicthe"
 
-msgid "glTF to Oro Expression"
-msgstr "glTF a Slonn Oro"
+msgid "glTF to Orostride Expression"
+msgstr "glTF a Slonn Orostride"
 
-msgid "Oro to glTF Expression"
-msgstr "Oro go glTF Slonn"
+msgid "Orostride to glTF Expression"
+msgstr "Orostride go glTF Slonn"
 
 msgid "Node Paths"
 msgstr "Cosáin Nód"
@@ -4364,8 +4364,8 @@ msgstr "Ailt"
 msgid "Roots"
 msgstr "Fréamhacha"
 
-msgid "Oro Bone Node"
-msgstr "Nód Cnámh Oro"
+msgid "Orostride Bone Node"
+msgstr "Nód Cnámh Orostride"
 
 msgid "Skin Root"
 msgstr "Fréamh an Chraicinn"
@@ -4376,8 +4376,8 @@ msgstr "Ailt Bhunaidh"
 msgid "Non Joints"
 msgstr "Neamh-Ailt"
 
-msgid "Oro Skin"
-msgstr "Craiceann Oro"
+msgid "Orostride Skin"
+msgstr "Craiceann Orostride"
 
 msgid "Src Image"
 msgstr "Íomhá Src"
@@ -5216,8 +5216,8 @@ msgstr "Óstach Dífhabhtaithe Cianda Wi-Fi"
 msgid "Splash Screen"
 msgstr "Scáileán Splais"
 
-msgid "Disable Oro Boot Splash"
-msgstr "Díchumasaigh Oro Bútáil Splais"
+msgid "Disable Orostride Boot Splash"
+msgstr "Díchumasaigh Orostride Bútáil Splais"
 
 msgid "Background Color"
 msgstr "Cúlra Dath"
@@ -5753,8 +5753,8 @@ msgstr "Deilbhín 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Méid Linn Snámha Emscripten"
 
-msgid "Oro Pool Size"
-msgstr "Méid Linn Snámha Oro"
+msgid "Orostride Pool Size"
+msgstr "Méid Linn Snámha Orostride"
 
 msgid "Windows"
 msgstr "Windows"

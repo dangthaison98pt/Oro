@@ -21,6 +21,6 @@ def get_doc_path():
 
 
 def is_enabled():
-    # Oro is a 2D-only engine: this 3D module is disabled by default.
+    # Orostride is a 2D-only engine: this 3D module is disabled by default.
     # Use module_fbx_enabled=yes to enable it.
     return False

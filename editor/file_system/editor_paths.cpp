@@ -84,7 +84,7 @@ String EditorPaths::get_debug_keystore_path() const {
 #endif
 }
 
-// This returns paths like "res://.oro/editor".
+// This returns paths like "res://.orostride/editor".
 String EditorPaths::get_project_settings_dir() const {
 	return get_project_data_dir().path_join("editor");
 }

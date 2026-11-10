@@ -5798,7 +5798,7 @@ void DisplayServerX11::_update_context(WindowData &wd) {
 				class_str = config_name.utf8();
 			}
 		} else {
-			class_str = "Oro";
+			class_str = "Orostride";
 		}
 
 		classHint->res_class = class_str.ptrw();
@@ -6619,7 +6619,7 @@ DisplayServerEnums::WindowID DisplayServerX11::_create_window(DisplayServerEnums
 		}
 
 		/* set the titlebar name */
-		XStoreName(x11_display, wd.x11_window, "Oro");
+		XStoreName(x11_display, wd.x11_window, "Orostride");
 		XSetWMProtocols(x11_display, wd.x11_window, &wm_delete, 1);
 		if (xdnd_aware != None) {
 			XChangeProperty(x11_display, wd.x11_window, xdnd_aware, XA_ATOM, 32, PropModeReplace, (unsigned char *)&xdnd_version, 1);
@@ -7186,7 +7186,7 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, DisplayServ
 
 			if (use_prime) {
 				print_line("Found discrete GPU, setting DRI_PRIME=1 to use it.");
-				print_line("Note: Set DRI_PRIME=0 in the environment to disable Oro from using the discrete GPU.");
+				print_line("Note: Set DRI_PRIME=0 in the environment to disable Orostride from using the discrete GPU.");
 				setenv("DRI_PRIME", "1", 1);
 			}
 		}

@@ -222,7 +222,7 @@ EditorNode *EditorNode::singleton = nullptr;
 static const String EDITOR_NODE_CONFIG_SECTION = "EditorNode";
 
 #ifdef _3D_DISABLED
-// Oro is 2D-only. This empty, always-hidden plugin keeps the "3D" main screen slot,
+// Orostride is 2D-only. This empty, always-hidden plugin keeps the "3D" main screen slot,
 // so EditorMainScreen indices (EDITOR_SCRIPT, EDITOR_GAME, ...) stay stable.
 class Placeholder3DEditorPlugin : public EditorPlugin {
 	GDCLASS(Placeholder3DEditorPlugin, EditorPlugin);
@@ -1044,9 +1044,9 @@ void EditorNode::_notification(int p_what) {
 
 			// Save the project after opening to mark it as last modified, except in headless mode.
 			// Also use this opportunity to ensure default settings are applied to new projects created from the command line
-			// using `touch project.oro`.
+			// using `touch project.orostride`.
 			if (DisplayServer::get_singleton()->window_can_draw()) {
-				const String project_settings_path = ProjectSettings::get_singleton()->get_resource_path().path_join("project.oro");
+				const String project_settings_path = ProjectSettings::get_singleton()->get_resource_path().path_join("project.orostride");
 				// Check the file's size in bytes as an optimization. If it's under 10 bytes, the file is assumed to be empty.
 				if (FileAccess::get_size(project_settings_path) < 10) {
 					const HashMap<String, Variant> initial_settings = get_initial_settings();
@@ -1607,10 +1607,10 @@ void EditorNode::_scan_external_changes() {
 		}
 	}
 
-	String project_settings_path = ProjectSettings::get_singleton()->get_resource_path().path_join("project.oro");
+	String project_settings_path = ProjectSettings::get_singleton()->get_resource_path().path_join("project.orostride");
 	if (FileAccess::get_modified_time(project_settings_path) > ProjectSettings::get_singleton()->get_last_saved_time()) {
 		TreeItem *ti = disk_changed_list->create_item(r);
-		ti->set_text(0, "project.oro");
+		ti->set_text(0, "project.orostride");
 		need_reload = true;
 		disk_changed_project = true;
 	}
@@ -2136,7 +2136,7 @@ void EditorNode::_dialog_display_load_error(String p_file, Error p_error) {
 				show_accept(vformat(TTR("Missing file '%s' or one of its dependencies."), p_file.get_file()), TTR("OK"));
 			} break;
 			case ERR_FILE_UNRECOGNIZED: {
-				show_accept(vformat(TTR("File '%s' is saved in a format that is newer than the formats supported by this version of Oro, so it can't be opened."), p_file.get_file()), TTR("OK"));
+				show_accept(vformat(TTR("File '%s' is saved in a format that is newer than the formats supported by this version of Orostride, so it can't be opened."), p_file.get_file()), TTR("OK"));
 			} break;
 			default: {
 				show_accept(vformat(TTR("Error while loading file '%s'."), p_file.get_file()), TTR("OK"));
@@ -3076,7 +3076,7 @@ void EditorNode::push_item_no_inspector(Object *p_object) {
 
 void EditorNode::save_default_environment() {
 #ifdef _3D_DISABLED
-	// Oro is 2D-only: there is no 3D world, so no fallback environment to save.
+	// Orostride is 2D-only: there is no 3D world, so no fallback environment to save.
 	return;
 #else
 	Ref<Environment> fallback = get_tree()->get_root()->get_world_3d()->get_fallback_environment();
@@ -6048,7 +6048,7 @@ String EditorNode::_get_system_info() const {
 	}
 	const String distribution_version = OS::get_singleton()->get_version_alias();
 
-	String godot_version = "Oro v" + String(GODOT_VERSION_FULL_CONFIG);
+	String godot_version = "Orostride v" + String(GODOT_VERSION_FULL_CONFIG);
 	if (String(GODOT_VERSION_BUILD) != "official") {
 		String hash = String(GODOT_VERSION_HASH);
 		hash = hash.is_empty() ? String("unknown") : vformat("(%s)", hash.left(9));
@@ -7717,7 +7717,7 @@ bool EditorNode::call_build() {
 
 	for (int i = 0; i < build_callback_count && builds_successful; i++) {
 		if (!build_callbacks[i]()) {
-			ERR_PRINT("An Oro Engine build callback failed.");
+			ERR_PRINT("An Orostride Engine build callback failed.");
 			builds_successful = false;
 		}
 	}
@@ -8388,8 +8388,8 @@ void EditorNode::notify_settings_overrides_changed() {
 }
 
 // Returns the list of project settings to add to new projects. This is used by the
-// project manager creation dialog, but also applies to empty `project.oro` files
-// to cover the command line workflow of creating projects using `touch project.oro`.
+// project manager creation dialog, but also applies to empty `project.orostride` files
+// to cover the command line workflow of creating projects using `touch project.orostride`.
 //
 // This is used to set better defaults for new projects without affecting existing projects.
 // Keep the list alphabetically sorted.
@@ -8397,7 +8397,7 @@ HashMap<String, Variant> EditorNode::get_initial_settings() {
 	HashMap<String, Variant> settings;
 	settings["display/window/stretch/aspect"] = "expand";
 	settings["display/window/stretch/mode"] = "canvas_items";
-	settings["physics/3d/physics_engine"] = "Dummy"; // Oro is 2D-only.
+	settings["physics/3d/physics_engine"] = "Dummy"; // Orostride is 2D-only.
 	settings["rendering/rendering_device/driver.windows"] = "d3d12";
 	return settings;
 }
@@ -9054,7 +9054,7 @@ EditorNode::EditorNode() {
 	ED_SHORTCUT_AND_COMMAND("editor/report_a_bug", TTRC("Report a Bug"));
 	ED_SHORTCUT_AND_COMMAND("editor/suggest_a_feature", TTRC("Suggest a Feature"));
 	ED_SHORTCUT_AND_COMMAND("editor/send_docs_feedback", TTRC("Send Docs Feedback"));
-	ED_SHORTCUT_AND_COMMAND("editor/about", TTRC("About Oro..."));
+	ED_SHORTCUT_AND_COMMAND("editor/about", TTRC("About Orostride..."));
 	ED_SHORTCUT_AND_COMMAND("editor/support_development", TTRC("Support Godot Development"));
 
 	// Use the Ctrl modifier so F2 can be used to rename nodes in the scene tree dock.
@@ -9415,7 +9415,7 @@ EditorNode::EditorNode() {
 
 	disk_changed = memnew(ConfirmationDialog);
 	{
-		disk_changed->set_title(TTR("Files have been modified outside Oro"));
+		disk_changed->set_title(TTR("Files have been modified outside Orostride"));
 
 		VBoxContainer *vbc = memnew(VBoxContainer);
 		disk_changed->add_child(vbc);
@@ -9444,7 +9444,7 @@ EditorNode::EditorNode() {
 	gui_base->add_child(disk_changed);
 
 	project_data_missing = memnew(ConfirmationDialog);
-	project_data_missing->set_text(TTRC("Project data folder (.godot) is missing. Please restart editor."));
+	project_data_missing->set_text(TTRC("Project data folder (.orostride) is missing. Please restart editor."));
 	project_data_missing->connect(SceneStringName(confirmed), callable_mp(this, &EditorNode::restart_editor).bind(false));
 	project_data_missing->set_ok_button_text(TTRC("Restart"));
 

@@ -230,7 +230,7 @@ Variant GDScriptLanguageProtocol::initialize(const Dictionary &p_params) {
 		if (ProjectSettings::get_singleton()->localize_path(root) != "res://") {
 			LSP::ShowMessageParams params{
 				LSP::MessageType::Warning,
-				"The GDScript Language Server might not work correctly with other projects than the one opened in Oro."
+				"The GDScript Language Server might not work correctly with other projects than the one opened in Orostride."
 			};
 			notify_client("window/showMessage", params.to_json());
 		}

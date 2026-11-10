@@ -1221,7 +1221,7 @@ Error EditorExportPlatformAppleEmbedded::_copy_asset(const Ref<EditorExportPrese
 		return ERR_FILE_NOT_FOUND;
 	}
 
-	String base_dir = p_asset.get_base_dir().replace("res://", "").replace(".oro/mono/temp/bin/", "");
+	String base_dir = p_asset.get_base_dir().replace("res://", "").replace(".orostride/mono/temp/bin/", "");
 	String asset = p_asset.ends_with("/") ? p_asset.left(-1) : p_asset;
 	String destination_dir;
 	String destination;
@@ -1609,7 +1609,7 @@ Error EditorExportPlatformAppleEmbedded::_export_apple_embedded_plugins(const Re
 		plugin_format["initialization"] = plugin_initialization_cpp_code;
 		plugin_format["deinitialization"] = plugin_deinitialization_cpp_code;
 
-		String plugin_cpp_code = "\n// Oro Plugins\n"
+		String plugin_cpp_code = "\n// Orostride Plugins\n"
 								 "void godot_apple_embedded_plugins_initialize();\n"
 								 "void godot_apple_embedded_plugins_deinitialize();\n"
 								 "// Exported Plugins\n\n"

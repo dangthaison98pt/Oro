@@ -209,7 +209,7 @@ public:
 	static RendererSceneOcclusionCull *get_singleton() { return singleton; }
 
 	void _print_warning() {
-		// Oro is 2D-only and builds without the raycast module by default, so this is expected.
+		// Orostride is 2D-only and builds without the raycast module by default, so this is expected.
 		static bool printed = false;
 		if (!printed) {
 			printed = true;

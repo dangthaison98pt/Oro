@@ -7,7 +7,7 @@
 # தமிழ்நேரம் <tamilneram247@gmail.com>, 2025, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oro Engine editor properties\n"
+"Project-Id-Version: Orostride Engine editor properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "PO-Revision-Date: 2026-03-16 05:10+0000\n"
 "Last-Translator: தமிழ்நேரம் <tamilneram247@gmail.com>\n"
@@ -4209,10 +4209,10 @@ msgstr "ஒளி"
 msgid "Visible"
 msgstr "தெரியும்"
 
-msgid "glTF to Oro Expression"
+msgid "glTF to Orostride Expression"
 msgstr "கோடோட் வெளிப்பாட்டிற்கு gltf"
 
-msgid "Oro to glTF Expression"
+msgid "Orostride to glTF Expression"
 msgstr "Gltf வெளிப்பாட்டிற்கு கோடோட்"
 
 msgid "Node Paths"
@@ -4233,7 +4233,7 @@ msgstr "மூட்டுகள்"
 msgid "Roots"
 msgstr "வேர்கள்"
 
-msgid "Oro Bone Node"
+msgid "Orostride Bone Node"
 msgstr "கோடோட் எலும்பு முனை"
 
 msgid "Skin Root"
@@ -4245,7 +4245,7 @@ msgstr "மூட்டுகள் அசல்"
 msgid "Non Joints"
 msgstr "அல்லாத மூட்டுகள்"
 
-msgid "Oro Skin"
+msgid "Orostride Skin"
 msgstr "கோடோட் தோல்"
 
 msgid "Src Image"
@@ -5595,7 +5595,7 @@ msgstr "படவுரு 512 ஃச் 512"
 msgid "Emscripten Pool Size"
 msgstr "Mescripten பூல் அளவு"
 
-msgid "Oro Pool Size"
+msgid "Orostride Pool Size"
 msgstr "கோடோட் பூல் அளவு"
 
 msgid "Windows"

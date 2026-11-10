@@ -1,5 +1,5 @@
-short_name = "oro"
-name = "Oro Engine"
+short_name = "orostride"
+name = "Orostride Engine"
 major = 4
 minor = 7
 patch = 2

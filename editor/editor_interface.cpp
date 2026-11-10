@@ -482,7 +482,7 @@ real_t EditorInterface::get_node_3d_scale_snap() const {
 	return Node3DEditor::get_singleton()->get_scale_snap();
 }
 #else
-// Oro is 2D-only: keep the scripting API, but there is no 3D editor.
+// Orostride is 2D-only: keep the scripting API, but there is no 3D editor.
 bool EditorInterface::is_node_3d_snap_enabled() const {
 	return false;
 }

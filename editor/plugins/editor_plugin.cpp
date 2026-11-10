@@ -169,7 +169,7 @@ void EditorPlugin::add_control_to_container(CustomControlContainer p_location, C
 		case CONTAINER_SPATIAL_EDITOR_SIDE_LEFT:
 		case CONTAINER_SPATIAL_EDITOR_SIDE_RIGHT:
 		case CONTAINER_SPATIAL_EDITOR_BOTTOM: {
-			// Oro is 2D-only: there is no 3D editor to add controls to.
+			// Orostride is 2D-only: there is no 3D editor to add controls to.
 		} break;
 #endif // _3D_DISABLED
 		case CONTAINER_CANVAS_EDITOR_MENU: {
@@ -230,7 +230,7 @@ void EditorPlugin::remove_control_from_container(CustomControlContainer p_locati
 		case CONTAINER_SPATIAL_EDITOR_SIDE_LEFT:
 		case CONTAINER_SPATIAL_EDITOR_SIDE_RIGHT:
 		case CONTAINER_SPATIAL_EDITOR_BOTTOM: {
-			// Oro is 2D-only: there is no 3D editor to add controls to.
+			// Orostride is 2D-only: there is no 3D editor to add controls to.
 		} break;
 #endif // _3D_DISABLED
 		case CONTAINER_CANVAS_EDITOR_MENU: {

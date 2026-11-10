@@ -2776,7 +2776,7 @@ Error RenderingDeviceDriverMetal::_create_device() {
 	device = context_driver->get_metal_device();
 
 	device_scope = NS::TransferPtr(MTL::CaptureManager::sharedCaptureManager()->newCaptureScope(device));
-	device_scope->setLabel(MTLSTR("Oro Frame"));
+	device_scope->setLabel(MTLSTR("Orostride Frame"));
 	device_scope->beginScope(); // Allow Xcode to capture the first frame, if desired.
 
 	return OK;
@@ -2894,7 +2894,7 @@ Error RenderingDeviceDriverMetal::_initialize(uint32_t p_device_index, uint32_t 
 
 	// The Metal renderer requires Apple4 family. This is 2017 era A11 chips and newer.
 	if (device_properties->features.highestFamily < MTL::GPUFamilyApple4) {
-		String error_string = vformat("Your Apple GPU does not support the following features, which are required to use Metal-based renderers in Oro:\n\n");
+		String error_string = vformat("Your Apple GPU does not support the following features, which are required to use Metal-based renderers in Orostride:\n\n");
 		if (!device_properties->features.imageCubeArray) {
 			error_string += "- No support for image cube arrays.\n";
 		}

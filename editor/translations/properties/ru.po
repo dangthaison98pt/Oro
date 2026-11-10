@@ -216,7 +216,7 @@
 # DatVex <kinorealme241@gmail.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oro Engine properties\n"
+"Project-Id-Version: Orostride Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: 2026-07-15 06:33+0000\n"
@@ -4557,11 +4557,11 @@ msgstr "Свет"
 msgid "Visible"
 msgstr "Видимый"
 
-msgid "glTF to Oro Expression"
-msgstr "glTF к выражению Oro"
+msgid "glTF to Orostride Expression"
+msgstr "glTF к выражению Orostride"
 
-msgid "Oro to glTF Expression"
-msgstr "Oro к выражению glTF"
+msgid "Orostride to glTF Expression"
+msgstr "Orostride к выражению glTF"
 
 msgid "Node Paths"
 msgstr "Пути к узлам"
@@ -4581,8 +4581,8 @@ msgstr "Суставы"
 msgid "Roots"
 msgstr "Корни"
 
-msgid "Oro Bone Node"
-msgstr "Узел кости Oro"
+msgid "Orostride Bone Node"
+msgstr "Узел кости Orostride"
 
 msgid "Skin Root"
 msgstr "Корень скина"
@@ -4593,8 +4593,8 @@ msgstr "Суставы (оригинал)"
 msgid "Non Joints"
 msgstr "Не суставы"
 
-msgid "Oro Skin"
-msgstr "Скин Oro"
+msgid "Orostride Skin"
+msgstr "Скин Orostride"
 
 msgid "Src Image"
 msgstr "Исходное изображение"
@@ -5434,8 +5434,8 @@ msgstr "Хост удалённой отладки по Wi-Fi"
 msgid "Splash Screen"
 msgstr "Экран заставки"
 
-msgid "Disable Oro Boot Splash"
-msgstr "Отключить загрузочную заставку Oro"
+msgid "Disable Orostride Boot Splash"
+msgstr "Отключить загрузочную заставку Orostride"
 
 msgid "Background Color"
 msgstr "Цвет фона"
@@ -5971,8 +5971,8 @@ msgstr "Значок 512 X 512"
 msgid "Emscripten Pool Size"
 msgstr "Размер пула памяти Emscripten"
 
-msgid "Oro Pool Size"
-msgstr "Размера пула памяти Oro"
+msgid "Orostride Pool Size"
+msgstr "Размера пула памяти Orostride"
 
 msgid "Windows"
 msgstr "Windows"

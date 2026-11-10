@@ -6086,8 +6086,8 @@ void AnimationTrackEditor::_insert_key_from_track(float p_ofs, int p_track) {
 		case Animation::TYPE_ROTATION_3D:
 		case Animation::TYPE_SCALE_3D:
 		case Animation::TYPE_BLEND_SHAPE: {
-			// Oro is 2D-only: 3D nodes don't exist, so these tracks can't be keyed from the editor.
-			EditorNode::get_singleton()->show_warning(TTR("3D tracks can't be keyed in Oro, which is 2D-only."));
+			// Orostride is 2D-only: 3D nodes don't exist, so these tracks can't be keyed from the editor.
+			EditorNode::get_singleton()->show_warning(TTR("3D tracks can't be keyed in Orostride, which is 2D-only."));
 			return;
 		} break;
 #endif // _3D_DISABLED

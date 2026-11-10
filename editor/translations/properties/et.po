@@ -14,7 +14,7 @@
 # Taavi Rannamets <taavirannamets@gmail.com>, 2025.
 msgid ""
 msgstr ""
-"Project-Id-Version: Oro Engine properties\n"
+"Project-Id-Version: Orostride Engine properties\n"
 "Report-Msgid-Bugs-To: https://github.com/godotengine/godot\n"
 "PO-Revision-Date: 2025-06-19 17:05+0000\n"
 "Last-Translator: Taavi Rannamets <taavirannamets@gmail.com>\n"
