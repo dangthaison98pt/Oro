@@ -57,6 +57,39 @@ if env["arch"] == "x86_64" and env["library_type"] == "executable":
         env.Append(LINKFLAGS=["-Wl,--entry=ShimMainCRTStartup"])
 
 
+def friendly_program_name():
+    """
+    Orostride uses short, product-style executable names (like Unity) instead of
+    Godot's `<name>.<platform>.<target>.<arch>` suffixes:
+    Orostride.exe (editor), OrostridePlayer.exe (release template), OrostridePlayerDebug.exe (debug template).
+    Non-default build variants get a short tag so they don't overwrite each other, e.g. Orostride.dev.exe.
+    """
+    if env.editor_build:
+        name = "Orostride"
+    elif env["target"] == "template_debug":
+        name = "OrostridePlayerDebug"
+    else:
+        name = "OrostridePlayer"
+    tags = []
+    if env.dev_build:
+        tags.append("dev")
+    if env["precision"] == "double":
+        tags.append("double")
+    if env["arch"] != "x86_64":
+        tags.append(env["arch"])
+    if not env["threads"]:
+        tags.append("nothreads")
+    tags += [t for t in (env.extra_suffix + env.module_version_string).split(".") if t]
+    return name + "".join("." + t for t in tags)
+
+
+# The editor goes at the top of the build folder; export templates (players) are not opened
+# directly by users, so they go in an ExportTemplates subfolder.
+program_dir = env["bin_dir"] if env.editor_build else env["bin_dir"] + "/ExportTemplates"
+program_name = program_dir + "/" + friendly_program_name()
+env["program_path"] = program_name + ".exe"  # Used by Visual Studio project generation.
+
+
 def arrange_program_clean(prog):
     """
     Given an SCons program, arrange for output files SCons doesn't know about
@@ -112,11 +145,16 @@ if env["accesskit"] and not env.msvc:
     sources += env.DEFLIB("uiautomationcore")
 
 if env["library_type"] == "static_library":
-    prog = env.add_library(env["bin_dir"] + "/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
+    prog = env.add_library(env["bin_dir"] + "/orostride", sources, PROGSUFFIX=env["PROGSUFFIX"])
 elif env["library_type"] == "shared_library":
-    prog = env.add_shared_library(env["bin_dir"] + "/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
+    prog = env.add_shared_library(env["bin_dir"] + "/orostride", sources, PROGSUFFIX=env["PROGSUFFIX"])
 else:
-    prog = env.add_program(env["bin_dir"] + "/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
+    link_flags = list(env["LINKFLAGS"])
+    if env.msvc:
+        # The editor exports symbols, so MSVC also writes an import library (.lib/.exp).
+        # Keep those out of the output folder; only the executables belong there.
+        link_flags.append("/IMPLIB:" + env["bin_dir"] + "/obj/" + friendly_program_name() + ".lib")
+    prog = env.add_program(program_name, sources, PROGSUFFIX=".exe", LINKFLAGS=link_flags)
 arrange_program_clean(prog)
 
 env.Depends(prog, "godot.manifest")
@@ -141,7 +179,7 @@ if env["windows_subsystem"] == "gui":
         env_wrap.Append(LINKFLAGS=["-Wl,--subsystem,console"])
         env_wrap.Append(LIBS=["version"])
 
-    prog_wrap = env_wrap.add_program(env["bin_dir"] + "/oro", common_win_wrap + res_wrap_obj, PROGSUFFIX=env["PROGSUFFIX_WRAP"])
+    prog_wrap = env_wrap.add_program(program_name, common_win_wrap + res_wrap_obj, PROGSUFFIX=".console.exe")
     arrange_program_clean(prog_wrap)
     env_wrap.Depends(prog_wrap, prog)
     sources += common_win_wrap + res_wrap_obj

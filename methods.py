@@ -33,6 +33,7 @@ def resolve_bin_dir(build_dir):
         path = base_folder / path
     return path.resolve().as_posix()
 
+
 # Listing all the folders we have converted
 # for SCU in scu_builders.py
 _scu_folders = set()
@@ -278,7 +279,7 @@ def detect_modules(search_path, recursive=False):
         if os.path.exists(version_path):
             with open(version_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                if 'short_name = "godot"' in content or 'short_name = "oro"' in content:
+                if 'short_name = "godot"' in content or 'short_name = "orostride"' in content:
                     return True
         return False
 
@@ -830,7 +831,7 @@ def show_progress(env):
     if env["ninja"]:
         return
 
-    NODE_COUNT_FILENAME = Path(env["bin_dir"]) / ".scons_node_count"
+    NODE_COUNT_FILENAME = Path(env["bin_dir"]) / "obj" / ".scons_node_count"
 
     class ShowProgress:
         def __init__(self):
@@ -990,7 +991,7 @@ def dump(env):
     Dumps latest build information for debugging purposes and external tools.
     """
 
-    with open(os.path.join(env["bin_dir"], ".scons_env.json"), "w", encoding="utf-8", newline="\n") as file:
+    with open(os.path.join(env["bin_dir"], "obj", ".scons_env.json"), "w", encoding="utf-8", newline="\n") as file:
         file.write(env.Dump(format="json"))
 
 
@@ -1246,7 +1247,7 @@ def generate_vs_project(env, original_args, project_name="godot"):
     others_active = []
 
     get_dependencies(
-        env.File(f"{env['bin_dir']}/oro{env['PROGSUFFIX']}"), env, extensions, headers_active, sources_active, others_active
+        env.File(env.get("program_path", f"{env['bin_dir']}/orostride{env['PROGSUFFIX']}")), env, extensions, headers_active, sources_active, others_active
     )
 
     all_items = []
@@ -1307,7 +1308,7 @@ def generate_vs_project(env, original_args, project_name="godot"):
             properties.append(
                 "<ActiveProjectItemList_%s>;%s;</ActiveProjectItemList_%s>" % (x, ";".join(itemlist[x]), x)
             )
-        output = os.path.join(env["bin_dir"], f"oro{env['PROGSUFFIX']}")
+        output = env.get("program_path", os.path.join(env["bin_dir"], f"orostride{env['PROGSUFFIX']}"))
 
         # The modules_enabled.gen.h header containing the defines is only generated on build, and only for the most recently built
         # platform, which means VS can't properly render code that's inside module-specific ifdefs. This adds those defines to the

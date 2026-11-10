@@ -262,7 +262,7 @@ opts.Add(BoolVariable("disable_exceptions", "Force disabling exception handling 
 opts.Add(
     BoolVariable(
         "disable_3d",
-        "Disable 3D nodes for a smaller executable (Oro: enabled by default)",
+        "Disable 3D nodes for a smaller executable (Orostride: enabled by default)",
         False,
     )
 )
@@ -305,7 +305,7 @@ opts.Add("cache_path", "Path to a directory where SCons cache files will be stor
 opts.Add("cache_limit", "Max size (in GiB) for the SCons cache. 0 means no limit.", "0")
 opts.Add(
     "build_dir",
-    "Directory for compiled binaries, build objects and SCons state (absolute, or relative to the repository root).",
+    "Directory for compiled binaries, build objects (obj/) and SCons state (absolute, or relative to the repository root).",
     "bin",
 )
 opts.Add(
@@ -380,10 +380,10 @@ opts.Update(env)
 
 # Resolve the build output directory. `bin_dir` is the absolute path used by all build scripts.
 env["bin_dir"] = methods.resolve_bin_dir(env["build_dir"])
-os.makedirs(env["bin_dir"], exist_ok=True)
+os.makedirs(os.path.join(env["bin_dir"], "obj"), exist_ok=True)
 
 # avoid issues when building with different versions of python out of the same directory
-env.SConsignFile(os.path.join(env["bin_dir"], ".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)))
+env.SConsignFile(os.path.join(env["bin_dir"], "obj", ".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)))
 
 # Setup caching logic early to catch everything.
 methods.prepare_cache(env)
@@ -1081,7 +1081,7 @@ sys.modules.pop("detect")
 
 if env.editor_build:
     unsupported_opts = []
-    # Oro's editor supports disabling 3D (it is 2D-only by default).
+    # Orostride's editor supports disabling 3D (it is 2D-only by default).
     for disable_opt in [
         "disable_advanced_gui",
         "disable_physics_2d",
@@ -1097,7 +1097,7 @@ if env.editor_build:
         )
         Exit(255)
 
-# Oro is a 2D-only engine: everything is built without 3D unless `disable_3d` is set explicitly.
+# Orostride is a 2D-only engine: everything is built without 3D unless `disable_3d` is set explicitly.
 if "disable_3d" not in ARGUMENTS and "disable_3d" not in custom_values:
     env["disable_3d"] = True
 
