@@ -89,6 +89,42 @@ program_dir = env["bin_dir"] if env.editor_build else env["bin_dir"] + "/ExportT
 program_name = program_dir + "/" + friendly_program_name()
 env["program_path"] = program_name + ".exe"  # Used by Visual Studio project generation.
 
+# Windows can't overwrite a running executable, but it can move it. So that you can keep Orostride
+# open while rebuilding, a running executable is moved into obj/old/ right before linking: the open
+# editor keeps working, and the new build is used the next time it's started.
+old_programs_dir = os.path.join(env["bin_dir"], "obj", "old")
+
+
+def clean_old_programs():
+    """Deletes executables moved aside by earlier builds (those no longer running)."""
+    if not os.path.isdir(old_programs_dir):
+        return
+    for name in os.listdir(old_programs_dir):
+        try:
+            os.remove(os.path.join(old_programs_dir, name))
+        except OSError:
+            pass  # Still running.
+
+
+def move_running_program_aside(target, source, env):
+    import time
+
+    for node in target:
+        path = str(node)
+        if not path.lower().endswith(".exe") or not os.path.exists(path):
+            continue
+        try:
+            with open(path, "ab"):
+                pass  # Writable: not running, the linker can overwrite it.
+        except OSError:
+            os.makedirs(old_programs_dir, exist_ok=True)
+            moved = os.path.join(old_programs_dir, f"{int(time.time())}-{os.path.basename(path)}")
+            os.replace(path, moved)
+            print(f"{os.path.basename(path)} is running: moved it to {moved}, the new build replaces it.")
+
+
+clean_old_programs()
+
 
 def arrange_program_clean(prog):
     """
@@ -155,6 +191,8 @@ else:
         # Keep those out of the output folder; only the executables belong there.
         link_flags.append("/IMPLIB:" + env["bin_dir"] + "/obj/" + friendly_program_name() + ".lib")
     prog = env.add_program(program_name, sources, PROGSUFFIX=".exe", LINKFLAGS=link_flags)
+    env.AddPreAction(prog, move_running_program_aside)
+    env.Precious(prog)  # Don't let SCons delete it first: a running executable can only be moved.
 arrange_program_clean(prog)
 
 env.Depends(prog, "godot.manifest")
@@ -180,6 +218,8 @@ if env["windows_subsystem"] == "gui":
         env_wrap.Append(LIBS=["version"])
 
     prog_wrap = env_wrap.add_program(program_name, common_win_wrap + res_wrap_obj, PROGSUFFIX=".console.exe")
+    env_wrap.AddPreAction(prog_wrap, move_running_program_aside)
+    env_wrap.Precious(prog_wrap)
     arrange_program_clean(prog_wrap)
     env_wrap.Depends(prog_wrap, prog)
     sources += common_win_wrap + res_wrap_obj

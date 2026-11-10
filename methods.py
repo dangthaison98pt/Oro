@@ -34,6 +34,22 @@ def resolve_bin_dir(build_dir):
     return path.resolve().as_posix()
 
 
+def hide_build_cache(bin_dir):
+    """
+    Hides the build cache (`<build_dir>/obj`) on Windows, so the build folder only shows
+    the files people actually use (and the cache isn't packaged by mistake).
+    """
+    if os.name != "nt":
+        return
+    import ctypes
+
+    FILE_ATTRIBUTE_HIDDEN = 0x2
+    obj_dir = os.path.join(bin_dir, "obj")
+    attributes = ctypes.windll.kernel32.GetFileAttributesW(obj_dir)
+    if attributes != -1 and not attributes & FILE_ATTRIBUTE_HIDDEN:
+        ctypes.windll.kernel32.SetFileAttributesW(obj_dir, attributes | FILE_ATTRIBUTE_HIDDEN)
+
+
 # Listing all the folders we have converted
 # for SCU in scu_builders.py
 _scu_folders = set()

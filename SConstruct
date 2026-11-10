@@ -381,6 +381,7 @@ opts.Update(env)
 # Resolve the build output directory. `bin_dir` is the absolute path used by all build scripts.
 env["bin_dir"] = methods.resolve_bin_dir(env["build_dir"])
 os.makedirs(os.path.join(env["bin_dir"], "obj"), exist_ok=True)
+methods.hide_build_cache(env["bin_dir"])
 
 # avoid issues when building with different versions of python out of the same directory
 env.SConsignFile(os.path.join(env["bin_dir"], "obj", ".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)))
