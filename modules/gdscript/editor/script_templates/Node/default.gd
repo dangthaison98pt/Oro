@@ -1,13 +1,15 @@
-# meta-description: Base template for Node with default Godot cycle methods
+# meta-description: Base template for a node script
+using Orostride;
 
-extends _BASE_
+public class _CLASS_ : _BASE_
+{
+    // Called when the node enters the scene tree for the first time.
+    void _ready()
+    {
+    }
 
-
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+    // Called every frame. delta is the time since the previous frame.
+    void _process(float delta)
+    {
+    }
+}

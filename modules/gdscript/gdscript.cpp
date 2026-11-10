@@ -2223,7 +2223,7 @@ String GDScriptLanguage::get_type() const {
 }
 
 String GDScriptLanguage::get_extension() const {
-	return "gd";
+	return "oro"; // New scripts are OroScript; .gd scripts still work.
 }
 
 void GDScriptLanguage::finish() {

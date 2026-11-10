@@ -1,3 +1,6 @@
-# meta-description: Empty template suitable for all Objects
+# meta-description: Empty class
+using Orostride;
 
-extends _BASE_
+public class _CLASS_ : _BASE_
+{
+}

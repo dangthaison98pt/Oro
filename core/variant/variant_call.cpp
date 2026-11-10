@@ -2081,6 +2081,18 @@ static void _register_variant_builtin_methods_string() {
 	bind_string_method(sha256_buffer, sarray(), varray());
 	bind_string_method(is_empty, sarray(), varray());
 	bind_string_methodv(contains, static_cast<bool (String::*)(const String &) const>(&String::contains), sarray("what"), varray());
+
+	// Orostride: C#-style names, used by OroScript.
+	bind_methodv(String, ToUpper, &String::to_upper, sarray(), varray());
+	bind_methodv(String, ToLower, &String::to_lower, sarray(), varray());
+	bind_methodv(String, Trim, &String::strip_edges, sarray("left", "right"), varray(true, true));
+	bind_methodv(String, StartsWith, static_cast<bool (String::*)(const String &) const>(&String::begins_with), sarray("text"), varray());
+	bind_methodv(String, EndsWith, static_cast<bool (String::*)(const String &) const>(&String::ends_with), sarray("text"), varray());
+	bind_methodv(String, Substring, &String::substr, sarray("from", "len"), varray(-1));
+	bind_methodv(String, Replace, static_cast<String (String::*)(const String &, const String &) const>(&String::replace), sarray("what", "forwhat"), varray());
+	bind_methodv(String, Split, static_cast<Vector<String> (String::*)(const String &, bool, int) const>(&String::split), sarray("delimiter", "allow_empty", "maxsplit"), varray("", true, 0));
+	bind_methodv(String, Contains, static_cast<bool (String::*)(const String &) const>(&String::contains), sarray("what"), varray());
+	bind_methodv(String, IndexOf, static_cast<int (String::*)(const String &, int) const>(&String::find), sarray("what", "from"), varray(0));
 	bind_string_methodv(containsn, static_cast<bool (String::*)(const String &) const>(&String::containsn), sarray("what"), varray());
 
 	bind_string_method(is_absolute_path, sarray(), varray());
@@ -2649,6 +2661,11 @@ static void _register_variant_builtin_methods_misc() {
 	bind_method(Dictionary, hash, sarray(), varray());
 	bind_method(Dictionary, keys, sarray(), varray());
 	bind_method(Dictionary, values, sarray(), varray());
+
+	// Orostride: C#-style Dictionary<K, V> names, used by OroScript.
+	bind_methodv(Dictionary, ContainsKey, &Dictionary::has, sarray("key"), varray());
+	bind_methodv(Dictionary, Remove, &Dictionary::erase, sarray("key"), varray());
+	bind_methodv(Dictionary, Clear, &Dictionary::clear, sarray(), varray());
 	bind_method(Dictionary, duplicate, sarray("deep"), varray(false));
 	bind_method(Dictionary, duplicate_deep, sarray("deep_subresources_mode"), varray(RESOURCE_DEEP_DUPLICATE_INTERNAL));
 	bind_method(Dictionary, get, sarray("key", "default"), varray(Variant()));
@@ -2699,6 +2716,15 @@ static void _register_variant_builtin_methods_array() {
 	bind_method(Array, rfind_custom, sarray("method", "from"), varray(-1));
 	bind_method(Array, count, sarray("value"), varray());
 	bind_method(Array, has, sarray("value"), varray());
+
+	// Orostride: C#-style List<T> names, used by OroScript.
+	bind_methodv(Array, Add, &Array::append, sarray("value"), varray());
+	bind_methodv(Array, Remove, &Array::erase, sarray("value"), varray());
+	bind_methodv(Array, RemoveAt, &Array::remove_at, sarray("position"), varray());
+	bind_methodv(Array, Contains, &Array::has, sarray("value"), varray());
+	bind_methodv(Array, Clear, &Array::clear, sarray(), varray());
+	bind_methodv(Array, Insert, &Array::insert, sarray("position", "value"), varray());
+	bind_methodv(Array, IndexOf, &Array::find, sarray("what", "from"), varray(0));
 	bind_method(Array, pop_back, sarray(), varray());
 	bind_method(Array, pop_front, sarray(), varray());
 	bind_method(Array, pop_at, sarray("position"), varray());

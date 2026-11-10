@@ -32,6 +32,7 @@
 
 #include "gdscript.h"
 #include "gdscript_tokenizer_buffer.h"
+#include "oroscript_translator.h"
 
 #include "core/config/project_settings.h"
 #include "core/io/resource_loader.h"
@@ -469,6 +470,25 @@ Error GDScriptParser::parse(const String &p_source_code, const String &p_script_
 		source = source.replace_first(String::chr(0xFFFF), String());
 	}
 
+	// Orostride: OroScript (.oro, C#-like) is translated first, keeping the line numbers.
+	List<ParserError> oroscript_errors;
+	if (OroScriptTranslator::is_oroscript_path(p_script_path)) {
+		Vector<OroScriptTranslator::Error> translation_errors;
+		source = OroScriptTranslator::translate(source, translation_errors);
+		for (const OroScriptTranslator::Error &translation_error : translation_errors) {
+			ParserError error;
+			error.message = translation_error.message;
+			error.start_line = translation_error.line;
+			error.end_line = translation_error.line;
+			error.start_column = translation_error.column;
+			error.end_column = translation_error.column + 1;
+			oroscript_errors.push_back(error);
+		}
+		if (!oroscript_errors.is_empty()) {
+			source = String(); // Still parse (an empty class) so that callers get a valid tree.
+		}
+	}
+
 	GDScriptTokenizerText *text_tokenizer = memnew(GDScriptTokenizerText);
 	text_tokenizer->set_source_code(source);
 
@@ -519,6 +539,10 @@ Error GDScriptParser::parse(const String &p_source_code, const String &p_script_
 		ERR_PRINT("Parser bug: Imbalanced multiline stack.");
 	}
 #endif // DEBUG_ENABLED
+
+	for (const ParserError &error : oroscript_errors) {
+		errors.push_back(error);
+	}
 
 	if (errors.is_empty()) {
 		return OK;
