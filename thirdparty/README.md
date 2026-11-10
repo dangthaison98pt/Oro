@@ -293,6 +293,10 @@ Patches:
   * Upstream: https://github.com/rsms/inter
   * Version: v4.1 (e3a3d4c57d5ecc01453a575621882a384c1995a3, 2024)
   * License: OFL-1.1
+- `Poppins_Regular.ttf`, `Poppins_SemiBold.ttf`:
+  * Upstream: https://github.com/google/fonts/tree/main/ofl/poppins
+  * Version: Google Fonts main branch (downloaded 2026-11-10)
+  * License: OFL-1.1
 - `JetBrainsMono_Regular.woff2`:
   * Upstream: https://github.com/JetBrains/JetBrainsMono
   * Version: 2.304 (cd5227bd1f61dff3bbd6c814ceaf7ffd95e947d9, 2023)

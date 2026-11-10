@@ -155,8 +155,10 @@ void editor_register_fonts(const Ref<Theme> &p_theme) {
 	const int default_font_size = int(EDITOR_GET("interface/editor/fonts/main_font_size")) * EDSCALE;
 	const float embolden_strength = 0.6;
 
-	Ref<Font> default_font = load_internal_font(_font_Inter_Regular, _font_Inter_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false);
-	Ref<Font> default_font_msdf = load_internal_font(_font_Inter_Regular, _font_Inter_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, font_allow_msdf);
+	// Orostride uses Poppins (matching the logo wordmark) as the main editor font.
+	// Inter stays as the first fallback for glyphs Poppins doesn't have.
+	Ref<Font> default_font = load_internal_font(_font_Poppins_Regular, _font_Poppins_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false);
+	Ref<Font> default_font_msdf = load_internal_font(_font_Poppins_Regular, _font_Poppins_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, font_allow_msdf);
 
 	Dictionary default_features;
 	default_features["calt"] = false; // Disable contextual alternates by default.
@@ -197,6 +199,7 @@ void editor_register_fonts(const Ref<Theme> &p_theme) {
 	}
 
 	TypedArray<Font> fallbacks;
+	load_internal_font(_font_Inter_Regular, _font_Inter_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks);
 	Ref<FontFile> arabic_font = load_internal_font(_font_Vazirmatn_Regular, _font_Vazirmatn_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks);
 	Ref<FontFile> bengali_font = load_internal_font(_font_NotoSansBengali_Regular, _font_NotoSansBengali_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks);
 	Ref<FontFile> devanagari_font = load_internal_font(_font_NotoSansDevanagari_Regular, _font_NotoSansDevanagari_Regular_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks);
@@ -224,10 +227,11 @@ void editor_register_fonts(const Ref<Theme> &p_theme) {
 	default_font->set_fallbacks(fallbacks);
 	default_font_msdf->set_fallbacks(fallbacks);
 
-	Ref<FontFile> default_font_bold = load_internal_font(_font_Inter_Bold, _font_Inter_Bold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false);
-	Ref<FontFile> default_font_bold_msdf = load_internal_font(_font_Inter_Bold, _font_Inter_Bold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, font_allow_msdf);
+	Ref<FontFile> default_font_bold = load_internal_font(_font_Poppins_SemiBold, _font_Poppins_SemiBold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false);
+	Ref<FontFile> default_font_bold_msdf = load_internal_font(_font_Poppins_SemiBold, _font_Poppins_SemiBold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, font_allow_msdf);
 
 	TypedArray<Font> fallbacks_bold;
+	load_internal_font(_font_Inter_Bold, _font_Inter_Bold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks_bold);
 	Ref<FontFile> arabic_font_bold = load_internal_font(_font_Vazirmatn_Bold, _font_Vazirmatn_Bold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks_bold);
 	Ref<FontFile> bengali_font_bold = load_internal_font(_font_NotoSansBengali_Bold, _font_NotoSansBengali_Bold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks_bold);
 	Ref<FontFile> devanagari_font_bold = load_internal_font(_font_NotoSansDevanagari_Bold, _font_NotoSansDevanagari_Bold_size, font_hinting, font_antialiasing, true, font_subpixel_positioning, font_disable_embedded_bitmaps, false, &fallbacks_bold);
@@ -505,7 +509,7 @@ void editor_register_fonts(const Ref<Theme> &p_theme) {
 
 	p_theme->set_type_variation("MainScreenButton", "Button");
 	p_theme->set_font(SceneStringName(font), "MainScreenButton", bold_fc);
-	p_theme->set_font_size(SceneStringName(font_size), "MainScreenButton", default_font_size + 2 * EDSCALE);
+	p_theme->set_font_size(SceneStringName(font_size), "MainScreenButton", default_font_size);
 
 	// Labels.
 
