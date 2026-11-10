@@ -1861,7 +1861,11 @@ void ThemeModern::populate_editor_styles(const Ref<EditorTheme> &p_theme, Editor
 		p_theme->set_constant("line_edit_margin_empty", "EditorSpinSlider", 20 * EDSCALE);
 
 		// Launch Pad and Play buttons.
+		// Orostride: title bar button groups use well-rounded corners.
+		const int title_bar_group_radius = 10 * EDSCALE;
+
 		Ref<StyleBoxFlat> style_launch_pad_movie = p_config.base_style->duplicate();
+		style_launch_pad_movie->set_corner_radius_all(title_bar_group_radius);
 		style_launch_pad_movie->set_content_margin_all(p_config.base_margin * EDSCALE);
 		style_launch_pad_movie->set_bg_color(p_config.accent_color * Color(1, 1, 1, 0.2));
 		style_launch_pad_movie->set_border_color(p_config.accent_color * Color(1, 1, 1, 0.8));
@@ -1869,9 +1873,16 @@ void ThemeModern::populate_editor_styles(const Ref<EditorTheme> &p_theme, Editor
 		p_theme->set_stylebox("LaunchPadMovieMode", EditorStringName(EditorStyles), style_launch_pad_movie);
 
 		int pad_normal_margin = style_launch_pad_movie->get_minimum_size().width / 2;
-		Ref<StyleBoxEmpty> style_launch_pad = memnew(StyleBoxEmpty);
+		Ref<StyleBoxFlat> style_launch_pad = p_config.base_style->duplicate();
+		style_launch_pad->set_bg_color(p_config.mono_color * Color(1, 1, 1, 0.07));
+		style_launch_pad->set_border_width_all(0);
+		style_launch_pad->set_corner_radius_all(title_bar_group_radius);
 		style_launch_pad->set_content_margin_all(pad_normal_margin);
 		p_theme->set_stylebox("LaunchPadNormal", EditorStringName(EditorStyles), style_launch_pad);
+
+		// Group around the main screen buttons (2D / Script / Game).
+		p_theme->set_type_variation("MainScreenButtonsPanel", "PanelContainer");
+		p_theme->set_stylebox(SceneStringName(panel), "MainScreenButtonsPanel", style_launch_pad);
 
 		Ref<StyleBoxFlat> style_launch_pad_recovery_mode = EditorThemeManager::make_flat_stylebox(p_config.dark_color_1, 2 * EDSCALE, 0, 2 * EDSCALE, 0, p_config.corner_radius);
 		style_launch_pad_recovery_mode->set_bg_color(p_config.accent_color * Color(1, 1, 1, 0.1));

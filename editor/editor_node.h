@@ -290,6 +290,7 @@ private:
 	Control *gui_base = nullptr;
 	VBoxContainer *main_vbox = nullptr;
 	OptionButton *renderer = nullptr;
+	MenuButton *layout_button = nullptr; // Unity-style layout selector in the title bar.
 
 #ifdef ANDROID_ENABLED
 	VBoxContainer *base_vbox = nullptr; // It only contains the title_bar and main_hbox.
@@ -668,6 +669,7 @@ private:
 	void _load_open_scenes_from_config(Ref<ConfigFile> p_layout);
 
 	void _update_layouts_menu();
+	void _layout_button_about_to_popup();
 	void _layout_menu_option(int p_id);
 
 	void _update_addon_config();

@@ -166,6 +166,7 @@
 #include "scene/gui/menu_bar.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/panel.h"
+#include "scene/gui/panel_container.h"
 #include "scene/gui/popup.h"
 #include "scene/gui/rich_text_label.h"
 #include "scene/gui/split_container.h"
@@ -772,6 +773,9 @@ void EditorNode::_update_theme(bool p_skip_creation) {
 		bottom_panel->_theme_changed();
 		distraction_free->set_button_icon(theme->get_icon(SNAME("DistractionFree"), EditorStringName(EditorIcons)));
 		update_distraction_free_button_theme();
+		if (layout_button) {
+			layout_button->set_button_icon(theme->get_icon(SNAME("GuiOptionArrow"), EditorStringName(EditorIcons)));
+		}
 
 		help_menu->set_item_icon(help_menu->get_item_index(HELP_SEARCH), get_editor_theme_native_menu_icon(SNAME("HelpSearch"), menu_type == MENU_TYPE_GLOBAL, dark_mode));
 		help_menu->set_item_icon(help_menu->get_item_index(HELP_COPY_SYSTEM_INFO), get_editor_theme_native_menu_icon(SNAME("ActionCopy"), menu_type == MENU_TYPE_GLOBAL, dark_mode));
@@ -6379,6 +6383,7 @@ void EditorNode::_load_editor_layout() {
 		} else {
 			ep.step(TTR("Loading docks..."), 1, true);
 			// Initialize some default values.
+			editor_dock_manager->load_docks_from_config(default_layout, "docks");
 			bottom_panel->load_layout_from_config(default_layout, EDITOR_NODE_CONFIG_SECTION);
 		}
 	} else {
@@ -6683,7 +6688,7 @@ void EditorNode::_update_layouts_menu() {
 		overridden_default_layout = true;
 	}
 
-	editor_layouts->add_shortcut(ED_SHORTCUT("layout/default", overridden_default_layout ? TTRC("Default (Overridden)") : TTRC("Default")), LAYOUT_DEFAULT);
+	editor_layouts->add_shortcut(ED_SHORTCUT("layout/default", overridden_default_layout ? TTRC("Oro Layout (Overridden)") : TTRC("Oro Layout")), LAYOUT_DEFAULT);
 
 	if (err != OK) {
 		return; // No config.
@@ -6694,6 +6699,20 @@ void EditorNode::_update_layouts_menu() {
 		if (layout != "Default" && !layout.contains_char('/')) {
 			editor_layouts->add_item(layout);
 			editor_layouts->set_item_auto_translate_mode(-1, AUTO_TRANSLATE_MODE_DISABLED);
+		}
+	}
+}
+
+// Mirrors the Editor > Editor Layout menu into the title bar "Layout" button (same items and ids).
+void EditorNode::_layout_button_about_to_popup() {
+	PopupMenu *popup = layout_button->get_popup();
+	popup->clear();
+	for (int i = 0; i < editor_layouts->get_item_count(); i++) {
+		if (editor_layouts->is_item_separator(i)) {
+			popup->add_separator();
+		} else {
+			popup->add_item(editor_layouts->get_item_text(i), editor_layouts->get_item_id(i));
+			popup->set_item_auto_translate_mode(-1, AUTO_TRANSLATE_MODE_DISABLED);
 		}
 	}
 }
@@ -9059,13 +9078,17 @@ EditorNode::EditorNode() {
 
 	// Use the Ctrl modifier so F2 can be used to rename nodes in the scene tree dock.
 	ED_SHORTCUT_AND_COMMAND("editor/editor_2d", TTRC("Open 2D Workspace"), KeyModifierMask::CTRL | Key::F1);
+#ifndef _3D_DISABLED
 	ED_SHORTCUT_AND_COMMAND("editor/editor_3d", TTRC("Open 3D Workspace"), KeyModifierMask::CTRL | Key::F2);
+#endif // _3D_DISABLED
 	ED_SHORTCUT_AND_COMMAND("editor/editor_script", TTRC("Open Script Editor"), KeyModifierMask::CTRL | Key::F3);
 	ED_SHORTCUT_AND_COMMAND("editor/editor_game", TTRC("Open Game View"), KeyModifierMask::CTRL | Key::F4);
 	ED_SHORTCUT_AND_COMMAND("editor/editor_assetlib", TTRC("Open Asset Store"), KeyModifierMask::CTRL | Key::F5);
 
 	ED_SHORTCUT_OVERRIDE("editor/editor_2d", "macos", KeyModifierMask::META | KeyModifierMask::CTRL | Key::KEY_1);
+#ifndef _3D_DISABLED
 	ED_SHORTCUT_OVERRIDE("editor/editor_3d", "macos", KeyModifierMask::META | KeyModifierMask::CTRL | Key::KEY_2);
+#endif // _3D_DISABLED
 	ED_SHORTCUT_OVERRIDE("editor/editor_script", "macos", KeyModifierMask::META | KeyModifierMask::CTRL | Key::KEY_3);
 	ED_SHORTCUT_OVERRIDE("editor/editor_game", "macos", KeyModifierMask::META | KeyModifierMask::CTRL | Key::KEY_4);
 	ED_SHORTCUT_OVERRIDE("editor/editor_assetlib", "macos", KeyModifierMask::META | KeyModifierMask::CTRL | Key::KEY_5);
@@ -9118,7 +9141,9 @@ EditorNode::EditorNode() {
 
 	_update_main_menu_type();
 
-	// Spacer to center 2D / 3D / Script buttons.
+	// Orostride: like Unity, the run bar (play / pause / stop) is centered in the title bar;
+	// the main screen buttons (2D / Script / Game) sit on the right, next to the Layout button.
+	// Spacer to center the run bar.
 	left_spacer = memnew(HBoxContainer);
 	left_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 	left_spacer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
@@ -9134,28 +9159,53 @@ EditorNode::EditorNode() {
 	project_title->set_visible(can_expand && menu_type == MENU_TYPE_GLOBAL);
 	left_spacer->add_child(project_title);
 
-	HBoxContainer *main_editor_button_hb = memnew(HBoxContainer);
-	main_editor_button_hb->set_mouse_filter(Control::MOUSE_FILTER_STOP);
-	main_editor_button_hb->set_name("EditorMainScreenButtons");
-	editor_main_screen->set_button_container(main_editor_button_hb);
-	title_bar->add_child(main_editor_button_hb);
-	title_bar->set_center_control(main_editor_button_hb);
+	project_run_bar = memnew(EditorRunBar);
+	project_run_bar->set_mouse_filter(Control::MOUSE_FILTER_STOP);
+	title_bar->add_child(project_run_bar);
+	title_bar->set_center_control(project_run_bar);
+	project_run_bar->connect("play_pressed", callable_mp(this, &EditorNode::_project_run_started));
+	project_run_bar->connect("stop_pressed", callable_mp(this, &EditorNode::_project_run_stopped));
 
-	// Spacer to center 2D / 3D / Script buttons.
+	// Spacer to center the run bar.
 	right_spacer = memnew(Control);
 	right_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 	right_spacer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	title_bar->add_child(right_spacer);
 
-	project_run_bar = memnew(EditorRunBar);
-	project_run_bar->set_mouse_filter(Control::MOUSE_FILTER_STOP);
-	title_bar->add_child(project_run_bar);
-	project_run_bar->connect("play_pressed", callable_mp(this, &EditorNode::_project_run_started));
-	project_run_bar->connect("stop_pressed", callable_mp(this, &EditorNode::_project_run_stopped));
-
 	right_menu_hb = memnew(HBoxContainer);
 	right_menu_hb->set_mouse_filter(Control::MOUSE_FILTER_STOP);
 	title_bar->add_child(right_menu_hb);
+
+	// Main screen buttons (2D / Script / Game) in a rounded group.
+	PanelContainer *main_editor_button_panel = memnew(PanelContainer);
+	main_editor_button_panel->set_theme_type_variation("MainScreenButtonsPanel");
+	main_editor_button_panel->set_v_size_flags(Control::SIZE_SHRINK_CENTER);
+	main_editor_button_panel->set_mouse_filter(Control::MOUSE_FILTER_PASS);
+	right_menu_hb->add_child(main_editor_button_panel);
+
+	HBoxContainer *main_editor_button_hb = memnew(HBoxContainer);
+	main_editor_button_hb->set_mouse_filter(Control::MOUSE_FILTER_STOP);
+	main_editor_button_hb->set_name("EditorMainScreenButtons");
+	editor_main_screen->set_button_container(main_editor_button_hb);
+	main_editor_button_panel->add_child(main_editor_button_hb);
+
+	Control *main_screen_gap = memnew(Control);
+	main_screen_gap->set_custom_minimum_size(Size2(8, 0) * EDSCALE);
+	main_screen_gap->set_mouse_filter(Control::MOUSE_FILTER_PASS);
+	right_menu_hb->add_child(main_screen_gap);
+
+	// Layout selector, like Unity's "Layout" dropdown. Uses the same layouts as Editor > Editor Layout.
+	layout_button = memnew(MenuButton);
+	layout_button->set_flat(false);
+	layout_button->set_theme_type_variation("FlatMenuButton");
+	layout_button->set_text(TTRC("Layout"));
+	layout_button->set_icon_alignment(HORIZONTAL_ALIGNMENT_RIGHT);
+	layout_button->set_tooltip_text(TTRC("Switch, save or delete editor layouts."));
+	layout_button->set_accessibility_name(TTRC("Editor Layout"));
+	layout_button->set_switch_on_hover(true);
+	layout_button->get_popup()->connect("about_to_popup", callable_mp(this, &EditorNode::_layout_button_about_to_popup));
+	layout_button->get_popup()->connect(SceneStringName(id_pressed), callable_mp(this, &EditorNode::_layout_menu_option));
+	right_menu_hb->add_child(layout_button);
 
 	renderer = memnew(OptionButton);
 	renderer->set_flat(true);
@@ -9230,15 +9280,16 @@ EditorNode::EditorNode() {
 	memnew(SceneTreeDock(scene_root, editor_selection, editor_data));
 	editor_dock_manager->add_dock(SceneTreeDock::get_singleton());
 
-	memnew(ImportDock);
-	editor_dock_manager->add_dock(ImportDock::get_singleton());
-
+	// FileSystem is added before Import so it is the first (selected) tab of the bottom dock.
 	FileSystemDock *filesystem_dock = memnew(FileSystemDock);
 	filesystem_dock->connect("inherit", callable_mp(this, &EditorNode::_inherit_request));
 	filesystem_dock->connect("instantiate", callable_mp(this, &EditorNode::_instantiate_request));
 	filesystem_dock->connect("display_mode_changed", callable_mp(this, &EditorNode::_save_editor_layout));
 	get_project_settings()->connect_filesystem_dock_signals(filesystem_dock);
 	editor_dock_manager->add_dock(filesystem_dock);
+
+	memnew(ImportDock);
+	editor_dock_manager->add_dock(ImportDock::get_singleton());
 
 	memnew(InspectorDock(editor_data));
 	editor_dock_manager->add_dock(InspectorDock::get_singleton());
@@ -9256,34 +9307,43 @@ EditorNode::EditorNode() {
 	const int dock_hsize = 280;
 	// By default there is only 3 visible, so set 2 split offsets for them.
 	const int dock_hsize_scaled = dock_hsize * EDSCALE;
-	main_hsplit->set_split_offsets({ dock_hsize_scaled, -dock_hsize_scaled });
+	// The inspector (right side) is a bit wider, so its tabs fit with the Poppins font.
+	const int right_dock_hsize = 340;
+	main_hsplit->set_split_offsets({ dock_hsize_scaled, int(-right_dock_hsize * EDSCALE) });
 
 	// Define corresponding default layout.
 
 	const String docks_section = "docks";
 	default_layout.instantiate();
 	// Dock numbers are based on DockSlot enum value + 1.
-	{
-		const String scene_key = SceneTreeDock::get_singleton()->get_effective_layout_key();
-		const String import_key = ImportDock::get_singleton()->get_effective_layout_key();
-		default_layout->set_value(docks_section, "dock_3", vformat("%s,%s", scene_key, import_key));
-		default_layout->set_value(docks_section, "dock_3_selected_tab_idx", 0);
-	}
-	{
-		const String filesystem_key = filesystem_dock->get_effective_layout_key();
-		const String history_key = history_dock->get_effective_layout_key();
-		default_layout->set_value(docks_section, "dock_4", vformat("%s,%s", filesystem_key, history_key));
-		default_layout->set_value(docks_section, "dock_4_selected_tab_idx", 0);
-	}
+	// "Oro Layout", modeled after Unity's default layout: the main screen takes the top row,
+	// the inspector is on the right, and the bottom row has the scene tree (like Unity's Hierarchy)
+	// next to the file system and output log (like Unity's Project and Console).
 	{
 		const String inspector_key = InspectorDock::get_singleton()->get_effective_layout_key();
 		const String signals_key = SignalsDock::get_singleton()->get_effective_layout_key();
 		const String groups_key = GroupsDock::get_singleton()->get_effective_layout_key();
-		default_layout->set_value(docks_section, "dock_5", vformat("%s,%s,%s", inspector_key, signals_key, groups_key));
+		default_layout->set_value(docks_section, "dock_5", vformat("%s,%s,%s", inspector_key, signals_key, groups_key)); // DOCK_SLOT_RIGHT_UL
 		default_layout->set_value(docks_section, "dock_5_selected_tab_idx", 0);
 	}
+	{
+		const String scene_key = SceneTreeDock::get_singleton()->get_effective_layout_key();
+		default_layout->set_value(docks_section, "dock_10", scene_key); // DOCK_SLOT_BOTTOM_L
+		default_layout->set_value(docks_section, "dock_10_selected_tab_idx", 0);
+	}
+	{
+		const String filesystem_key = filesystem_dock->get_effective_layout_key();
+		const String import_key = ImportDock::get_singleton()->get_effective_layout_key();
+		const String history_key = history_dock->get_effective_layout_key();
+		// The output log ("Output") is created later with the bottom panel; refer to it by its layout key.
+		default_layout->set_value(docks_section, "dock_11", vformat("%s,Output,%s,%s", filesystem_key, import_key, history_key)); // DOCK_SLOT_BOTTOM_R
+		default_layout->set_value(docks_section, "dock_11_selected_tab_idx", 0);
+	}
+	// Bottom row height and the width of its left (scene tree) part.
+	default_layout->set_value(docks_section, "dock_main_split", -80);
+	default_layout->set_value(docks_section, "dock_bottom_split", -360);
 
-	int hsplits[] = { 0, dock_hsize, -dock_hsize, 0 };
+	int hsplits[] = { 0, dock_hsize, -right_dock_hsize, 0 };
 	for (int i = 0; i < (int)std_size(hsplits); i++) {
 		default_layout->set_value(docks_section, "dock_hsplit_" + itos(i + 1), hsplits[i]);
 	}

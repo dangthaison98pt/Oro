@@ -488,7 +488,7 @@ EditorLog::EditorLog() {
 	set_name(TTRC("Output"));
 	set_icon_name("Output");
 	set_dock_shortcut(ED_SHORTCUT_AND_COMMAND("bottom_panels/toggle_output_bottom_panel", TTRC("Toggle Output Dock"), KeyModifierMask::ALT | Key::O));
-	set_default_slot(EditorDock::DOCK_SLOT_BOTTOM);
+	set_default_slot(EditorDock::DOCK_SLOT_BOTTOM_R);
 	set_available_layouts(EditorDock::DOCK_LAYOUT_HORIZONTAL | EditorDock::DOCK_LAYOUT_FLOATING);
 	set_process_shortcut_input(true);
 	set_shortcut_context(this);

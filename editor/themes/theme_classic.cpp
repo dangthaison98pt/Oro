@@ -1801,8 +1801,13 @@ void ThemeClassic::populate_editor_styles(const Ref<EditorTheme> &p_theme, Edito
 
 		// Launch Pad and Play buttons.
 		Ref<StyleBoxFlat> style_launch_pad = EditorThemeManager::make_flat_stylebox(p_config.dark_color_1, 2 * EDSCALE, 0, 2 * EDSCALE, 0, p_config.corner_radius);
-		style_launch_pad->set_corner_radius_all(p_config.corner_radius * EDSCALE);
+		// Orostride: title bar button groups use well-rounded corners.
+		style_launch_pad->set_corner_radius_all(10 * EDSCALE);
 		p_theme->set_stylebox("LaunchPadNormal", EditorStringName(EditorStyles), style_launch_pad);
+
+		// Group around the main screen buttons (2D / Script / Game).
+		p_theme->set_type_variation("MainScreenButtonsPanel", "PanelContainer");
+		p_theme->set_stylebox(SceneStringName(panel), "MainScreenButtonsPanel", style_launch_pad);
 		Ref<StyleBoxFlat> style_launch_pad_movie = style_launch_pad->duplicate();
 		style_launch_pad_movie->set_bg_color(p_config.accent_color * Color(1, 1, 1, 0.1));
 		style_launch_pad_movie->set_border_color(p_config.accent_color);

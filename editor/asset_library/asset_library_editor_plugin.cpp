@@ -2315,13 +2315,8 @@ EditorAssetLibrary::EditorAssetLibrary(bool p_templates_only) {
 ///////
 
 bool AssetLibraryEditorPlugin::is_available() {
-#ifdef WEB_ENABLED
-	// Asset Store can't work on Web editor for now as most assets are sourced
-	// directly from GitHub which does not set CORS.
+	// Orostride has no asset store (Godot's asset library targets Godot projects), so it is never shown.
 	return false;
-#else
-	return StreamPeerTLS::is_available() && !Engine::get_singleton()->is_recovery_mode_hint();
-#endif
 }
 
 const Ref<Texture2D> AssetLibraryEditorPlugin::get_plugin_icon() const {

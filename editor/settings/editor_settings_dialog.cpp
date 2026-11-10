@@ -895,10 +895,12 @@ void EditorSettingsDialog::_tabs_tab_changed(int p_tab) {
 
 void EditorSettingsDialog::_update_dynamic_property_hints() {
 	// Calling add_property_hint overrides the existing hint.
+#ifndef _3D_DISABLED
 	EditorSettings *settings = EditorSettings::get_singleton();
 	settings->add_property_hint(_create_mouse_shortcut_property_info("editors/3d/navigation/orbit_mouse_button", "spatial_editor/viewport_orbit_modifier_1", "spatial_editor/viewport_orbit_modifier_2"));
 	settings->add_property_hint(_create_mouse_shortcut_property_info("editors/3d/navigation/pan_mouse_button", "spatial_editor/viewport_pan_modifier_1", "spatial_editor/viewport_pan_modifier_2"));
 	settings->add_property_hint(_create_mouse_shortcut_property_info("editors/3d/navigation/zoom_mouse_button", "spatial_editor/viewport_zoom_modifier_1", "spatial_editor/viewport_zoom_modifier_2"));
+#endif // _3D_DISABLED
 }
 
 PropertyInfo EditorSettingsDialog::_create_mouse_shortcut_property_info(const String &p_property_name, const String &p_shortcut_1_name, const String &p_shortcut_2_name) {

@@ -344,7 +344,8 @@ EditorThemeManager::ThemeConfiguration EditorThemeManager::_create_theme_config(
 				preset_accent_color = Color(0.44, 0.73, 0.98);
 				preset_base_color = Color(0.24, 0.24, 0.24);
 			} else if (config.preset == "Light") {
-				preset_accent_color = Color(0.18, 0.50, 1.00);
+				// Darker Orostride red (#D0402E) for contrast on light backgrounds.
+				preset_accent_color = Color(0.816, 0.251, 0.180);
 				preset_base_color = Color(0.9, 0.9, 0.9);
 				preset_contrast = light_contrast;
 				preset_icon_saturation = 1;
@@ -357,7 +358,8 @@ EditorThemeManager::ThemeConfiguration EditorThemeManager::_create_theme_config(
 				preset_base_color = Color(0.89, 0.86, 0.79);
 				preset_contrast = light_contrast;
 			} else { // Default
-				preset_accent_color = Color(0.337, 0.62, 1.0);
+				// Orostride brand red (#EF5C49, the lit side of the logo mountain).
+				preset_accent_color = Color(0.937, 0.361, 0.286);
 				preset_base_color = Color(0.161, 0.161, 0.161);
 			}
 

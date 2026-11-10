@@ -752,7 +752,7 @@ ImportDock::ImportDock() {
 	set_name(TTRC("Import"));
 	set_icon_name("FileAccess");
 	set_dock_shortcut(ED_SHORTCUT_AND_COMMAND("docks/open_import", TTRC("Open Import Dock")));
-	set_default_slot(EditorDock::DOCK_SLOT_LEFT_UR);
+	set_default_slot(EditorDock::DOCK_SLOT_BOTTOM_R);
 
 	VBoxContainer *main_vb = memnew(VBoxContainer);
 	add_child(main_vb);
