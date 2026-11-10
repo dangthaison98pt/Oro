@@ -111,6 +111,20 @@ private:
 	RBSet<Key> key_label_pressed;
 	RBSet<Key> physical_keys_pressed;
 	RBSet<Key> keys_pressed;
+
+	// Orostride: frames of the last press/release, for Unity-style GetKeyDown()/GetKeyUp().
+	struct UnityPressFrames {
+		uint64_t pressed_process_frame = UINT64_MAX;
+		uint64_t pressed_physics_frame = UINT64_MAX;
+		uint64_t released_process_frame = UINT64_MAX;
+		uint64_t released_physics_frame = UINT64_MAX;
+	};
+	HashMap<int, UnityPressFrames> unity_key_frames;
+	HashMap<int, UnityPressFrames> unity_mouse_frames;
+	void _unity_record_press(HashMap<int, UnityPressFrames> &r_frames, int p_code, bool p_pressed);
+	bool _unity_is_down(const HashMap<int, UnityPressFrames> &p_frames, int p_code) const;
+	bool _unity_is_up(const HashMap<int, UnityPressFrames> &p_frames, int p_code) const;
+	bool _unity_button_state(const String &p_name, int p_state) const;
 	RBSet<JoyButton> joy_buttons_pressed;
 	RBMap<JoyAxis, float> _joy_axis;
 	//RBMap<StringName,int> custom_action_press;
@@ -354,6 +368,22 @@ public:
 	bool is_anything_pressed() const;
 	bool is_any_key_pressed() const;
 	bool is_key_pressed(Key p_keycode) const;
+
+	// Orostride: Unity-style input API. The PascalCase names are intentional, to match Unity.
+	// Keys use KeyCode constants; mouse buttons are 0 (left), 1 (right), 2 (middle).
+	bool GetKey(int p_key) const;
+	bool GetKeyDown(int p_key) const;
+	bool GetKeyUp(int p_key) const;
+	float GetAxisRaw(const String &p_axis) const;
+	float GetAxis(const String &p_axis) const;
+	bool GetButton(const String &p_button) const;
+	bool GetButtonDown(const String &p_button) const;
+	bool GetButtonUp(const String &p_button) const;
+	bool GetMouseButton(int p_button) const;
+	bool GetMouseButtonDown(int p_button) const;
+	bool GetMouseButtonUp(int p_button) const;
+	Vector2 unity_get_mouse_position() const;
+	bool unity_is_any_key() const;
 	bool is_physical_key_pressed(Key p_keycode) const;
 	bool is_key_label_pressed(Key p_keycode) const;
 	bool is_mouse_button_pressed(MouseButton p_button) const;

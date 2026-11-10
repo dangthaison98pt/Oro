@@ -3156,6 +3156,13 @@ static void _register_variant_builtin_constants() {
 	_VariantCall::add_variant_constant(Variant::VECTOR2, "RIGHT", Vector2::RIGHT);
 	_VariantCall::add_variant_constant(Variant::VECTOR2, "UP", Vector2::UP);
 	_VariantCall::add_variant_constant(Variant::VECTOR2, "DOWN", Vector2::DOWN);
+	// Orostride: Unity-style lowercase constants (Unity coordinates, Y points up).
+	_VariantCall::add_variant_constant(Variant::VECTOR2, "zero", Vector2(0, 0));
+	_VariantCall::add_variant_constant(Variant::VECTOR2, "one", Vector2(1, 1));
+	_VariantCall::add_variant_constant(Variant::VECTOR2, "left", Vector2(-1, 0));
+	_VariantCall::add_variant_constant(Variant::VECTOR2, "right", Vector2(1, 0));
+	_VariantCall::add_variant_constant(Variant::VECTOR2, "up", Vector2(0, 1));
+	_VariantCall::add_variant_constant(Variant::VECTOR2, "down", Vector2(0, -1));
 
 	_VariantCall::add_variant_constant(Variant::VECTOR2I, "ZERO", Vector2i(0, 0));
 	_VariantCall::add_variant_constant(Variant::VECTOR2I, "ONE", Vector2i(1, 1));

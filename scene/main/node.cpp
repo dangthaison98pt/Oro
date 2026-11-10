@@ -47,6 +47,7 @@ STATIC_ASSERT_INCOMPLETE_TYPE(class, Engine);
 #include "core/object/script_language.h"
 #include "core/string/print_string.h"
 #include "scene/animation/tween.h"
+#include "scene/main/canvas_item.h"
 #include "scene/main/instance_placeholder.h"
 #include "scene/main/multiplayer_api.h"
 #include "scene/main/scene_tree.h"
@@ -3752,8 +3753,193 @@ RID Node::get_accessibility_element() const {
 	return data.accessibility_element;
 }
 
+// Orostride: Unity-style component API.
+
+Node::UnityTypeQuery Node::unity_resolve_type(const Variant &p_type) {
+	UnityTypeQuery query;
+	switch (p_type.get_type()) {
+		case Variant::STRING:
+		case Variant::STRING_NAME: {
+			query.class_name = p_type;
+			query.valid = query.class_name != StringName();
+		} break;
+		case Variant::OBJECT: {
+			Object *type = p_type.get_validated_object();
+			if (!type) {
+				break;
+			}
+			query.script = Object::cast_to<Script>(type);
+			if (query.script) {
+				query.valid = true;
+			} else if (type->has_method(SNAME("get_native_class_name"))) {
+				// A native class reference from GDScript, e.g. `GetComponent(Sprite2D)`.
+				query.class_name = type->call(SNAME("get_native_class_name"));
+				query.valid = query.class_name != StringName();
+			}
+		} break;
+		default:
+			break;
+	}
+	return query;
+}
+
+bool Node::unity_matches(const Node *p_node, const UnityTypeQuery &p_query) {
+	if (!p_query.valid) {
+		return false;
+	}
+	if (p_query.script == nullptr && p_node->is_class(p_query.class_name)) {
+		return true;
+	}
+	// Match the script or its `class_name`, including the base scripts.
+	const ScriptInstance *instance = p_node->get_script_instance();
+	if (!instance) {
+		return false;
+	}
+	for (Ref<Script> script = instance->get_script(); script.is_valid(); script = script->get_base_script()) {
+		if (p_query.script ? script.ptr() == p_query.script : script->get_global_name() == p_query.class_name) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Node::unity_matches_type(const Node *p_node, const Variant &p_type) {
+	ERR_FAIL_NULL_V(p_node, false);
+	return unity_matches(p_node, unity_resolve_type(p_type));
+}
+
+bool Node::unity_is_component() const {
+	// Scene roots and nodes with children are game objects.
+	if (!data.parent || !data.owner || get_child_count(false) > 0 || !get_scene_file_path().is_empty()) {
+		return false;
+	}
+	if (has_meta(SNAME("_component"))) {
+		return get_meta(SNAME("_component"));
+	}
+	// Function-local so the names are created after StringName is ready.
+	static const StringName component_classes[] = {
+		"MonoBehaviour",
+		"CollisionShape2D",
+		"CollisionPolygon2D",
+		"AnimationPlayer",
+		"AnimationTree",
+		"AudioStreamPlayer",
+		"AudioStreamPlayer2D",
+		"Timer",
+		"NavigationAgent2D",
+		"NavigationObstacle2D",
+		"VisibleOnScreenNotifier2D",
+		"VisibleOnScreenEnabler2D",
+		"RemoteTransform2D",
+		"HTTPRequest",
+		"ResourcePreloader",
+		"MultiplayerSpawner",
+		"MultiplayerSynchronizer",
+	};
+	for (const StringName &class_name : component_classes) {
+		if (is_class(class_name)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+Node *Node::GetComponent(const Variant &p_type) {
+	// Like Unity, components are the node itself and its direct children.
+	const UnityTypeQuery query = unity_resolve_type(p_type);
+	if (!query.valid || unity_matches(this, query)) {
+		return query.valid ? this : nullptr;
+	}
+	for (int i = 0; i < get_child_count(false); i++) {
+		Node *child = get_child(i, false);
+		if (unity_matches(child, query)) {
+			return child;
+		}
+	}
+	return nullptr;
+}
+
+TypedArray<Node> Node::GetComponents(const Variant &p_type) {
+	TypedArray<Node> result;
+	const UnityTypeQuery query = unity_resolve_type(p_type);
+	if (!query.valid) {
+		return result;
+	}
+	if (unity_matches(this, query)) {
+		result.push_back(this);
+	}
+	for (int i = 0; i < get_child_count(false); i++) {
+		Node *child = get_child(i, false);
+		if (unity_matches(child, query)) {
+			result.push_back(child);
+		}
+	}
+	return result;
+}
+
+static Node *_unity_find_in_children(Node *p_node, const Node::UnityTypeQuery &p_query) {
+	if (Node::unity_matches(p_node, p_query)) {
+		return p_node;
+	}
+	for (int i = 0; i < p_node->get_child_count(false); i++) {
+		Node *found = _unity_find_in_children(p_node->get_child(i, false), p_query);
+		if (found) {
+			return found;
+		}
+	}
+	return nullptr;
+}
+
+Node *Node::GetComponentInChildren(const Variant &p_type) {
+	const UnityTypeQuery query = unity_resolve_type(p_type);
+	return query.valid ? _unity_find_in_children(this, query) : nullptr;
+}
+
+Node *Node::GetComponentInParent(const Variant &p_type) {
+	const UnityTypeQuery query = unity_resolve_type(p_type);
+	if (!query.valid) {
+		return nullptr;
+	}
+	for (Node *node = this; node; node = node->get_parent()) {
+		if (unity_matches(node, query)) {
+			return node;
+		}
+	}
+	return nullptr;
+}
+
+bool Node::CompareTag(const String &p_tag) {
+	// Unity tags map to groups.
+	return is_in_group(p_tag);
+}
+
+void Node::SetActive(bool p_active) {
+	set_process_mode(p_active ? PROCESS_MODE_INHERIT : PROCESS_MODE_DISABLED);
+	CanvasItem *canvas_item = Object::cast_to<CanvasItem>(this);
+	if (canvas_item) {
+		canvas_item->set_visible(p_active);
+	}
+}
+
+bool Node::unity_is_active_self() const {
+	const CanvasItem *canvas_item = Object::cast_to<CanvasItem>(this);
+	return get_process_mode() != PROCESS_MODE_DISABLED && (!canvas_item || canvas_item->is_visible());
+}
+
 void Node::_bind_methods() {
 	GLOBAL_DEF(PropertyInfo(Variant::INT, "editor/naming/node_name_num_separator", PROPERTY_HINT_ENUM, "None,Space,Underscore,Dash"), 0);
+
+	// Orostride: Unity-style component API.
+	ClassDB::bind_method(D_METHOD("GetComponent", "type"), &Node::GetComponent);
+	ClassDB::bind_method(D_METHOD("GetComponents", "type"), &Node::GetComponents);
+	ClassDB::bind_method(D_METHOD("GetComponentInChildren", "type"), &Node::GetComponentInChildren);
+	ClassDB::bind_method(D_METHOD("GetComponentInParent", "type"), &Node::GetComponentInParent);
+	ClassDB::bind_method(D_METHOD("CompareTag", "tag"), &Node::CompareTag);
+	ClassDB::bind_method(D_METHOD("SetActive", "active"), &Node::SetActive);
+	ClassDB::bind_method(D_METHOD("unity_get_game_object"), &Node::unity_get_game_object);
+	ClassDB::bind_method(D_METHOD("unity_is_active_self"), &Node::unity_is_active_self);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "gameObject", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_game_object");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "activeSelf", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_is_active_self");
 	GLOBAL_DEF(PropertyInfo(Variant::INT, "editor/naming/node_name_casing", PROPERTY_HINT_ENUM, "PascalCase,camelCase,snake_case,kebab-case"), NAME_CASING_PASCAL_CASE);
 
 	ClassDB::bind_static_method("Node", D_METHOD("print_orphan_nodes"), &Node::print_orphan_nodes);

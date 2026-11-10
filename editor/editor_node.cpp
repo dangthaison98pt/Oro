@@ -110,6 +110,7 @@
 #include "editor/import/resource_importer_texture.h"
 #include "editor/import/resource_importer_texture_atlas.h"
 #include "editor/import/resource_importer_wav.h"
+#include "editor/inspector/component_inspector_plugin.h"
 #include "editor/inspector/editor_context_menu_plugin.h"
 #include "editor/inspector/editor_inspector.h"
 #include "editor/inspector/editor_preview_plugins.h"
@@ -8700,6 +8701,10 @@ EditorNode::EditorNode() {
 		Ref<EditorInspectorParticleProcessMaterialPlugin> ppm;
 		ppm.instantiate();
 		EditorInspector::add_inspector_plugin(ppm);
+
+		Ref<ComponentInspectorPlugin> component_plugin;
+		component_plugin.instantiate();
+		EditorInspector::add_inspector_plugin(component_plugin);
 	}
 
 	editor_selection = memnew(EditorSelection);

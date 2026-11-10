@@ -127,6 +127,23 @@ bool Input::is_mouse_mode_override_enabled() {
 void Input::_bind_methods() {
 	using namespace InputClassEnums;
 
+	// Orostride: Unity-style input API.
+	ClassDB::bind_method(D_METHOD("GetKey", "key"), &Input::GetKey);
+	ClassDB::bind_method(D_METHOD("GetKeyDown", "key"), &Input::GetKeyDown);
+	ClassDB::bind_method(D_METHOD("GetKeyUp", "key"), &Input::GetKeyUp);
+	ClassDB::bind_method(D_METHOD("GetAxis", "axis"), &Input::GetAxis);
+	ClassDB::bind_method(D_METHOD("GetAxisRaw", "axis"), &Input::GetAxisRaw);
+	ClassDB::bind_method(D_METHOD("GetButton", "button"), &Input::GetButton);
+	ClassDB::bind_method(D_METHOD("GetButtonDown", "button"), &Input::GetButtonDown);
+	ClassDB::bind_method(D_METHOD("GetButtonUp", "button"), &Input::GetButtonUp);
+	ClassDB::bind_method(D_METHOD("GetMouseButton", "button"), &Input::GetMouseButton);
+	ClassDB::bind_method(D_METHOD("GetMouseButtonDown", "button"), &Input::GetMouseButtonDown);
+	ClassDB::bind_method(D_METHOD("GetMouseButtonUp", "button"), &Input::GetMouseButtonUp);
+	ClassDB::bind_method(D_METHOD("unity_get_mouse_position"), &Input::unity_get_mouse_position);
+	ClassDB::bind_method(D_METHOD("unity_is_any_key"), &Input::unity_is_any_key);
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "mousePosition", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_mouse_position");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "anyKey", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_is_any_key");
+
 	ClassDB::bind_method(D_METHOD("is_anything_pressed"), &Input::is_anything_pressed);
 	ClassDB::bind_method(D_METHOD("is_key_pressed", "keycode"), &Input::is_key_pressed);
 	ClassDB::bind_method(D_METHOD("is_physical_key_pressed", "keycode"), &Input::is_physical_key_pressed);
@@ -337,6 +354,170 @@ bool Input::is_any_key_pressed() const {
 	}
 
 	return !keys_pressed.is_empty();
+}
+
+// Orostride: Unity-style input API.
+
+void Input::_unity_record_press(HashMap<int, UnityPressFrames> &r_frames, int p_code, bool p_pressed) {
+	UnityPressFrames &frames = r_frames[p_code];
+	if (p_pressed) {
+		frames.pressed_process_frame = Engine::get_singleton()->get_process_frames();
+		frames.pressed_physics_frame = Engine::get_singleton()->get_physics_frames();
+	} else {
+		frames.released_process_frame = Engine::get_singleton()->get_process_frames();
+		frames.released_physics_frame = Engine::get_singleton()->get_physics_frames();
+	}
+}
+
+bool Input::_unity_is_down(const HashMap<int, UnityPressFrames> &p_frames, int p_code) const {
+	const UnityPressFrames *frames = p_frames.getptr(p_code);
+	if (!frames) {
+		return false;
+	}
+	if (Engine::get_singleton()->is_in_physics_frame()) {
+		return frames->pressed_physics_frame == Engine::get_singleton()->get_physics_frames();
+	}
+	return frames->pressed_process_frame == Engine::get_singleton()->get_process_frames();
+}
+
+bool Input::_unity_is_up(const HashMap<int, UnityPressFrames> &p_frames, int p_code) const {
+	const UnityPressFrames *frames = p_frames.getptr(p_code);
+	if (!frames) {
+		return false;
+	}
+	if (Engine::get_singleton()->is_in_physics_frame()) {
+		return frames->released_physics_frame == Engine::get_singleton()->get_physics_frames();
+	}
+	return frames->released_process_frame == Engine::get_singleton()->get_process_frames();
+}
+
+bool Input::GetKey(int p_key) const {
+	_THREAD_SAFE_METHOD_
+	return keys_pressed.has((Key)p_key);
+}
+
+bool Input::GetKeyDown(int p_key) const {
+	_THREAD_SAFE_METHOD_
+	return _unity_is_down(unity_key_frames, p_key);
+}
+
+bool Input::GetKeyUp(int p_key) const {
+	_THREAD_SAFE_METHOD_
+	return _unity_is_up(unity_key_frames, p_key);
+}
+
+float Input::GetAxisRaw(const String &p_axis) const {
+	// Unity's default axes. Positive "Vertical" is up, like in Unity.
+	float value = 0.0f;
+	if (p_axis == "Horizontal") {
+		value = (GetKey((int)Key::RIGHT) || GetKey((int)Key::D) ? 1.0f : 0.0f) - (GetKey((int)Key::LEFT) || GetKey((int)Key::A) ? 1.0f : 0.0f);
+		if (value == 0.0f) {
+			const float stick = get_joy_axis(0, JoyAxis::LEFT_X);
+			value = Math::abs(stick) > 0.2f ? stick : 0.0f;
+		}
+	} else if (p_axis == "Vertical") {
+		value = (GetKey((int)Key::UP) || GetKey((int)Key::W) ? 1.0f : 0.0f) - (GetKey((int)Key::DOWN) || GetKey((int)Key::S) ? 1.0f : 0.0f);
+		if (value == 0.0f) {
+			const float stick = -get_joy_axis(0, JoyAxis::LEFT_Y);
+			value = Math::abs(stick) > 0.2f ? stick : 0.0f;
+		}
+	} else if (p_axis == "Mouse X") {
+		value = mouse_velocity_track.velocity.x * Engine::get_singleton()->get_process_step() * 0.1f;
+	} else if (p_axis == "Mouse Y") {
+		value = -mouse_velocity_track.velocity.y * Engine::get_singleton()->get_process_step() * 0.1f;
+	} else if (InputMap::get_singleton()->has_action(p_axis)) {
+		value = get_action_strength(p_axis);
+	} else {
+		ERR_FAIL_V_MSG(0.0f, vformat("Unknown input axis \"%s\". Use \"Horizontal\", \"Vertical\", \"Mouse X\", \"Mouse Y\" or an Input Map action.", p_axis));
+	}
+	return value;
+}
+
+float Input::GetAxis(const String &p_axis) const {
+	// No smoothing yet: same as GetAxisRaw().
+	return GetAxisRaw(p_axis);
+}
+
+bool Input::_unity_button_state(const String &p_name, int p_state) const {
+	// p_state: 0 = held, 1 = pressed this frame, 2 = released this frame.
+	if (InputMap::get_singleton()->has_action(p_name)) {
+		switch (p_state) {
+			case 1:
+				return is_action_just_pressed(p_name);
+			case 2:
+				return is_action_just_released(p_name);
+			default:
+				return is_action_pressed(p_name);
+		}
+	}
+
+	// Unity's default buttons.
+	Vector<Key> keys;
+	int mouse_button = -1;
+	if (p_name == "Jump") {
+		keys = { Key::SPACE };
+	} else if (p_name == "Fire1") {
+		keys = { Key::CTRL };
+		mouse_button = 0;
+	} else if (p_name == "Fire2") {
+		keys = { Key::ALT };
+		mouse_button = 1;
+	} else if (p_name == "Fire3") {
+		keys = { Key::SHIFT };
+		mouse_button = 2;
+	} else if (p_name == "Submit") {
+		keys = { Key::ENTER, Key::KP_ENTER, Key::SPACE };
+	} else if (p_name == "Cancel") {
+		keys = { Key::ESCAPE };
+	} else {
+		ERR_FAIL_V_MSG(false, vformat("Unknown input button \"%s\". Use Jump, Fire1, Fire2, Fire3, Submit, Cancel or an Input Map action.", p_name));
+	}
+
+	for (Key key : keys) {
+		if ((p_state == 0 && GetKey((int)key)) || (p_state == 1 && GetKeyDown((int)key)) || (p_state == 2 && GetKeyUp((int)key))) {
+			return true;
+		}
+	}
+	if (mouse_button >= 0) {
+		return (p_state == 0 && GetMouseButton(mouse_button)) || (p_state == 1 && GetMouseButtonDown(mouse_button)) || (p_state == 2 && GetMouseButtonUp(mouse_button));
+	}
+	return false;
+}
+
+bool Input::GetButton(const String &p_button) const {
+	return _unity_button_state(p_button, 0);
+}
+
+bool Input::GetButtonDown(const String &p_button) const {
+	return _unity_button_state(p_button, 1);
+}
+
+bool Input::GetButtonUp(const String &p_button) const {
+	return _unity_button_state(p_button, 2);
+}
+
+bool Input::GetMouseButton(int p_button) const {
+	_THREAD_SAFE_METHOD_
+	// Unity: 0 = left, 1 = right, 2 = middle. Godot: 1 = left, 2 = right, 3 = middle.
+	return mouse_button_mask.has_flag(mouse_button_to_mask(MouseButton(p_button + 1)));
+}
+
+bool Input::GetMouseButtonDown(int p_button) const {
+	_THREAD_SAFE_METHOD_
+	return _unity_is_down(unity_mouse_frames, p_button + 1);
+}
+
+bool Input::GetMouseButtonUp(int p_button) const {
+	_THREAD_SAFE_METHOD_
+	return _unity_is_up(unity_mouse_frames, p_button + 1);
+}
+
+Vector2 Input::unity_get_mouse_position() const {
+	return get_mouse_position();
+}
+
+bool Input::unity_is_any_key() const {
+	return is_anything_pressed();
 }
 
 bool Input::is_key_pressed(Key p_keycode) const {
@@ -817,6 +998,7 @@ void Input::_parse_input_event_impl(const Ref<InputEvent> &p_event, bool p_is_em
 		} else {
 			keys_pressed.erase(k->get_keycode());
 		}
+		_unity_record_press(unity_key_frames, (int)k->get_keycode(), k->is_pressed());
 	}
 	if (k.is_valid() && !k->is_echo() && k->get_physical_keycode() != Key::NONE) {
 		if (k->is_pressed()) {
@@ -841,6 +1023,7 @@ void Input::_parse_input_event_impl(const Ref<InputEvent> &p_event, bool p_is_em
 		} else {
 			mouse_button_mask.clear_flag(mouse_button_to_mask(mb->get_button_index()));
 		}
+		_unity_record_press(unity_mouse_frames, (int)mb->get_button_index(), mb->is_pressed());
 
 		Point2 pos = mb->get_global_position();
 		if (mouse_pos != pos) {

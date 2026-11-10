@@ -30,6 +30,7 @@
 
 #include "time.h" // NOLINT(modernize-deprecated-headers) False positive with C-Header of the same name.
 
+#include "core/config/engine.h"
 #include "core/object/class_db.h"
 #include "core/os/os.h"
 
@@ -389,7 +390,68 @@ uint64_t Time::get_ticks_usec() const {
 	return OS::get_singleton()->get_ticks_usec();
 }
 
+// Orostride: Unity-style game time.
+
+double Time::unity_get_delta_time() const {
+	// Like Unity, deltaTime is the fixed step inside physics frames (FixedUpdate).
+	if (Engine::get_singleton()->is_in_physics_frame()) {
+		return unity_get_fixed_delta_time() * Engine::get_singleton()->get_effective_time_scale();
+	}
+	return Engine::get_singleton()->get_process_step() * Engine::get_singleton()->get_effective_time_scale();
+}
+
+double Time::unity_get_unscaled_delta_time() const {
+	return Engine::get_singleton()->get_process_step();
+}
+
+double Time::unity_get_fixed_delta_time() const {
+	return 1.0 / Engine::get_singleton()->get_physics_ticks_per_second();
+}
+
+double Time::unity_get_time() const {
+	return Engine::get_singleton()->get_unity_time();
+}
+
+double Time::unity_get_unscaled_time() const {
+	return Engine::get_singleton()->get_unity_unscaled_time();
+}
+
+double Time::unity_get_time_scale() const {
+	return Engine::get_singleton()->get_time_scale();
+}
+
+void Time::unity_set_time_scale(double p_scale) {
+	Engine::get_singleton()->set_time_scale(p_scale);
+}
+
+int64_t Time::unity_get_frame_count() const {
+	return (int64_t)Engine::get_singleton()->get_process_frames();
+}
+
+double Time::unity_get_realtime_since_startup() const {
+	return OS::get_singleton()->get_ticks_usec() / 1000000.0;
+}
+
 void Time::_bind_methods() {
+	// Orostride: Unity-style game time.
+	ClassDB::bind_method(D_METHOD("unity_get_delta_time"), &Time::unity_get_delta_time);
+	ClassDB::bind_method(D_METHOD("unity_get_unscaled_delta_time"), &Time::unity_get_unscaled_delta_time);
+	ClassDB::bind_method(D_METHOD("unity_get_fixed_delta_time"), &Time::unity_get_fixed_delta_time);
+	ClassDB::bind_method(D_METHOD("unity_get_time"), &Time::unity_get_time);
+	ClassDB::bind_method(D_METHOD("unity_get_unscaled_time"), &Time::unity_get_unscaled_time);
+	ClassDB::bind_method(D_METHOD("unity_get_time_scale"), &Time::unity_get_time_scale);
+	ClassDB::bind_method(D_METHOD("unity_set_time_scale", "scale"), &Time::unity_set_time_scale);
+	ClassDB::bind_method(D_METHOD("unity_get_frame_count"), &Time::unity_get_frame_count);
+	ClassDB::bind_method(D_METHOD("unity_get_realtime_since_startup"), &Time::unity_get_realtime_since_startup);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "deltaTime", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_delta_time");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "unscaledDeltaTime", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_unscaled_delta_time");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "fixedDeltaTime", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_fixed_delta_time");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "time", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_time");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "unscaledTime", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_unscaled_time");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "timeScale", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "unity_set_time_scale", "unity_get_time_scale");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "frameCount", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_frame_count");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "realtimeSinceStartup", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "unity_get_realtime_since_startup");
+
 	ClassDB::bind_method(D_METHOD("get_datetime_dict_from_unix_time", "unix_time_val"), &Time::get_datetime_dict_from_unix_time);
 	ClassDB::bind_method(D_METHOD("get_date_dict_from_unix_time", "unix_time_val"), &Time::get_date_dict_from_unix_time);
 	ClassDB::bind_method(D_METHOD("get_time_dict_from_unix_time", "unix_time_val"), &Time::get_time_dict_from_unix_time);

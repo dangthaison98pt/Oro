@@ -404,6 +404,18 @@ void SceneTreeEditor::_update_node(Node *p_node, TreeItem *p_item, bool p_part_o
 
 	p_item->set_text(0, p_node->get_name());
 	p_item->set_text_overrun_behavior(0, TextServer::OVERRUN_NO_TRIMMING);
+
+	// Orostride: like Unity, components (scripts, collision shapes, ...) are shown in the Inspector
+	// of their game object instead of the Hierarchy.
+	if (is_scene_tree_dock) {
+		if (p_node != get_scene_node() && p_node->unity_is_component()) {
+			p_item->set_meta(SNAME("_component"), true);
+			p_item->set_visible(false);
+		} else if (p_item->has_meta(SNAME("_component"))) {
+			p_item->remove_meta(SNAME("_component"));
+			p_item->set_visible(true);
+		}
+	}
 	if (can_rename && !p_part_of_subscene) {
 		p_item->set_editable(0, true);
 	}
@@ -890,6 +902,10 @@ void SceneTreeEditor::_node_added(Node *p_node) {
 	}
 
 	node_cache.mark_dirty(p_node);
+	// The parent may stop being a component (it has a child now).
+	if (p_node->get_parent() && node_cache.has(p_node->get_parent())) {
+		node_cache.mark_dirty(p_node->get_parent());
+	}
 	_update_if_clean();
 }
 
@@ -910,6 +926,10 @@ void SceneTreeEditor::_node_removed(Node *p_node) {
 		return;
 	}
 	node_cache.remove(p_node);
+	// The parent may become a component again (it has no children left).
+	if (p_node->get_parent() && node_cache.has(p_node->get_parent())) {
+		node_cache.mark_dirty(p_node->get_parent());
+	}
 	_update_if_clean();
 }
 
@@ -1070,6 +1090,9 @@ bool SceneTreeEditor::_update_filter_helper(TreeItem *p_parent, bool p_scroll_to
 		} else {
 			// Show only selectable nodes, or parents of selectable.
 			p_parent->set_visible(keep_for_children || selectable);
+		}
+		if (p_parent->has_meta(SNAME("_component"))) {
+			p_parent->set_visible(false); // Shown in the Inspector instead.
 		}
 	}
 

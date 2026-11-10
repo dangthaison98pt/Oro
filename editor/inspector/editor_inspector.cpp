@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "editor_inspector.h"
+#include "editor/inspector/component_inspector_plugin.h"
 #include "editor_inspector.compat.inc"
 
 #include "core/input/input.h"
@@ -4203,6 +4204,10 @@ void EditorInspector::update_tree() {
 		if (!inspector_plugins[i]->can_handle(object)) {
 			continue;
 		}
+		// Orostride: the game object header, transform and component list only go in the main Inspector.
+		if (!unity_object_layout && Object::cast_to<ComponentInspectorPlugin>(inspector_plugins[i].ptr())) {
+			continue;
+		}
 		valid_plugins.push_back(inspector_plugins[i]);
 	}
 
@@ -4273,6 +4278,19 @@ void EditorInspector::update_tree() {
 	StringName doc_name;
 
 	// Get the lists of editors for properties.
+	effective_hidden_classes = hidden_property_classes;
+	unity_object_layout_active = false;
+	{
+		const Node *node = Object::cast_to<Node>(object);
+		if (unity_object_layout && node && !node->unity_is_component() && EditorNode::get_singleton()->get_edited_scene() &&
+				(node == EditorNode::get_singleton()->get_edited_scene() || EditorNode::get_singleton()->get_edited_scene()->is_ancestor_of(node))) {
+			effective_hidden_classes.push_back(SNAME("Node"));
+			effective_hidden_classes.push_back(SNAME("CanvasItem"));
+			effective_hidden_classes.push_back(SNAME("Node2D"));
+			unity_object_layout_active = true; // The script and metadata go in the "Advanced" section.
+		}
+	}
+
 	for (List<PropertyInfo>::Element *E_property = plist.front(); E_property; E_property = E_property->next()) {
 		PropertyInfo &p = E_property->get();
 
@@ -4344,6 +4362,9 @@ void EditorInspector::update_tree() {
 			}
 			if (!valid) {
 				continue; // Empty, ignore it.
+			}
+			if (!is_custom_category && _is_hidden_by_class(p.name, true)) {
+				continue; // All of its properties are hidden.
 			}
 
 			String category_tooltip;
@@ -4420,6 +4441,10 @@ void EditorInspector::update_tree() {
 
 		if (p.name == "script" && (hide_script || bool(object->call("_hide_script_from_inspector")))) {
 			// Hide script variables from inspector if required.
+			continue;
+		}
+
+		if (_is_hidden_by_class(p.name, false)) {
 			continue;
 		}
 
@@ -5161,7 +5186,7 @@ void EditorInspector::update_tree() {
 		}
 	}
 
-	if (!hide_metadata && !object->call("_hide_metadata_from_inspector")) {
+	if (!hide_metadata && !unity_object_layout_active && !object->call("_hide_metadata_from_inspector")) {
 		// Add 4px of spacing between the "Add Metadata" button and the content above it.
 		Control *spacer = memnew(Control);
 		spacer->set_custom_minimum_size(Size2(0, 4) * EDSCALE);
@@ -5461,6 +5486,33 @@ int EditorInspector::get_scroll_offset() const {
 
 void EditorInspector::set_use_wide_editors(bool p_enable) {
 	wide_editors = p_enable;
+}
+
+bool EditorInspector::_is_hidden_by_class(const StringName &p_class_or_property, bool p_is_class) const {
+	if (!p_is_class && hidden_property_names.has(p_class_or_property)) {
+		return true;
+	}
+	// The script is added by Object, not declared in ClassDB: it belongs with the node settings.
+	if (!p_is_class && p_class_or_property == CoreStringName(script)) {
+		if (unity_object_layout_active) {
+			return true;
+		}
+		return !shown_property_classes.is_empty() && !shown_property_classes.has(SNAME("Node"));
+	}
+	for (const StringName &hidden_class : effective_hidden_classes) {
+		if (p_is_class ? p_class_or_property == hidden_class : ClassDB::has_property(hidden_class, p_class_or_property, true)) {
+			return true;
+		}
+	}
+	if (shown_property_classes.is_empty()) {
+		return false;
+	}
+	for (const StringName &shown_class : shown_property_classes) {
+		if (p_is_class ? p_class_or_property == shown_class : ClassDB::has_property(shown_class, p_class_or_property, true)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 void EditorInspector::set_root_inspector(EditorInspector *p_root_inspector) {

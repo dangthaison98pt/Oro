@@ -52,6 +52,17 @@ class Time : public Object {
 public:
 	static Time *get_singleton();
 
+	// Orostride: Unity-style game time (Time.deltaTime, Time.time, ...).
+	double unity_get_delta_time() const;
+	double unity_get_unscaled_delta_time() const;
+	double unity_get_fixed_delta_time() const;
+	double unity_get_time() const;
+	double unity_get_unscaled_time() const;
+	double unity_get_time_scale() const;
+	void unity_set_time_scale(double p_scale);
+	int64_t unity_get_frame_count() const;
+	double unity_get_realtime_since_startup() const;
+
 	// Methods that convert times.
 	Dictionary get_datetime_dict_from_unix_time(int64_t p_unix_time_val) const;
 	Dictionary get_date_dict_from_unix_time(int64_t p_unix_time_val) const;

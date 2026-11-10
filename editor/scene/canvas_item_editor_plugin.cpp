@@ -802,6 +802,10 @@ void CanvasItemEditor::_find_canvas_items_in_rect(const Rect2 &p_rect, Node *p_n
 }
 
 bool CanvasItemEditor::_select_click_on_item(CanvasItem *item, Point2 p_click_pos, bool p_append) {
+	// Orostride: like Unity, clicking a component (e.g. a sprite added with Add Component) selects its game object.
+	while (item && item->unity_is_component() && Object::cast_to<CanvasItem>(item->get_parent())) {
+		item = Object::cast_to<CanvasItem>(item->get_parent());
+	}
 	bool still_selected = true;
 	const List<Node *> &top_node_list = editor_selection->get_top_selected_node_list();
 	if (p_append && !top_node_list.is_empty()) {

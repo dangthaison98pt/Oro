@@ -864,16 +864,17 @@ InspectorDock::InspectorDock(EditorData &p_editor_data) {
 	mc->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 
 	inspector = EditorInspector::create_default_inspector(search);
+	inspector->set_unity_object_layout(true);
 	mc->add_child(inspector);
 
 	// Unity-style "Add Component": adds a child node (e.g. a collision shape or a sprite) to the selected node.
 	add_component_button = memnew(Button);
 	add_component_button->set_text(TTRC("Add Component"));
-	add_component_button->set_tooltip_text(TTRC("Add a child node to the selected node, like adding a component in Unity."));
+	add_component_button->set_tooltip_text(TTRC("Add a component (script, collider, sprite, audio, ...) to the selected game object."));
 	add_component_button->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
 	add_component_button->set_custom_minimum_size(Size2(200, 0) * EDSCALE);
 	add_component_button->hide();
-	add_component_button->connect(SceneStringName(pressed), callable_mp(SceneTreeDock::get_singleton(), &SceneTreeDock::open_add_child_dialog));
+	add_component_button->connect(SceneStringName(pressed), callable_mp(SceneTreeDock::get_singleton(), &SceneTreeDock::open_add_component_dialog));
 	main_vb->add_child(add_component_button);
 	inspector->connect("resource_selected", callable_mp(this, &InspectorDock::_resource_selected));
 

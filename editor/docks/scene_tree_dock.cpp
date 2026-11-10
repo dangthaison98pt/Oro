@@ -655,6 +655,7 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 				create_dialog->set_base_type("Node");
 				reset_create_dialog = false;
 			}
+			adding_component = false;
 
 			// Prefer nodes that inherit from the current scene root.
 			Node *current_edited_scene_root = EditorNode::get_singleton()->get_edited_scene();
@@ -2693,7 +2694,14 @@ void SceneTreeDock::_do_reparent(Node *p_new_parent, int p_position_in_parent, V
 }
 
 void SceneTreeDock::_script_created(Ref<Script> p_script) {
-	const List<Node *> &selected = editor_selection->get_top_selected_node_list();
+	List<Node *> selected;
+	Node *target_component = ObjectDB::get_instance<Node>(script_target_component);
+	script_target_component = ObjectID();
+	if (target_component) {
+		selected.push_back(target_component);
+	} else {
+		selected = editor_selection->get_top_selected_node_list();
+	}
 
 	if (selected.is_empty()) {
 		return;
@@ -2744,6 +2752,7 @@ void SceneTreeDock::_shader_created(Ref<Shader> p_shader) {
 }
 
 void SceneTreeDock::_script_creation_closed() {
+	callable_mp(this, &SceneTreeDock::_clear_script_target_component).call_deferred();
 	script_create_dialog->disconnect("script_created", callable_mp(this, &SceneTreeDock::_script_created));
 	script_create_dialog->disconnect(SceneStringName(confirmed), callable_mp(this, &SceneTreeDock::_script_creation_closed));
 	script_create_dialog->disconnect("canceled", callable_mp(this, &SceneTreeDock::_script_creation_closed));
@@ -3100,9 +3109,13 @@ Node *SceneTreeDock::_do_create(Node *p_parent) {
 		new_name = adjust_name_casing(new_name);
 	}
 	child->set_name(new_name);
+	if (adding_component && edited_scene) {
+		child->set_meta(SNAME("_component"), true);
+	}
+	adding_component = false;
 
 	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
-	undo_redo->create_action_for_history(TTR("Create Node"), editor_data->get_current_edited_scene_history_id());
+	undo_redo->create_action_for_history(adding_component_action_name(child), editor_data->get_current_edited_scene_history_id());
 
 	if (edited_scene) {
 		undo_redo->add_do_method(p_parent, "add_child", child, true);
@@ -3129,6 +3142,12 @@ Node *SceneTreeDock::_do_create(Node *p_parent) {
 
 void SceneTreeDock::_post_do_create(Node *p_child) {
 	editor_selection->clear();
+	if (p_child->unity_is_component() && p_child->get_parent()) {
+		// Keep the game object selected; the new component shows up in its Inspector.
+		editor_selection->add_node(p_child->get_parent());
+		_push_item(p_child->get_parent());
+		return;
+	}
 	editor_selection->add_node(p_child);
 	_push_item(p_child);
 
@@ -4393,6 +4412,24 @@ void SceneTreeDock::attach_script_to_selected(bool p_extend) {
 	script_create_dialog->popup_centered();
 }
 
+void SceneTreeDock::attach_script_to_component(Node *p_component) {
+	ERR_FAIL_NULL(p_component);
+	if (ScriptServer::get_language_count() == 0 || !profile_allow_script_editing) {
+		return;
+	}
+	script_target_component = p_component->get_instance_id();
+
+	String root_path = editor_data->get_edited_scene_root() ? editor_data->get_edited_scene_root()->get_scene_file_path() : String();
+	const String path = (root_path.is_empty() ? String("res://") : root_path.get_base_dir()).path_join(p_component->get_name());
+
+	script_create_dialog->connect("script_created", callable_mp(this, &SceneTreeDock::_script_created));
+	script_create_dialog->connect(SceneStringName(confirmed), callable_mp(this, &SceneTreeDock::_script_creation_closed));
+	script_create_dialog->connect("canceled", callable_mp(this, &SceneTreeDock::_script_creation_closed));
+	script_create_dialog->set_inheritance_base_type("Node");
+	script_create_dialog->config(p_component->get_class(), path);
+	script_create_dialog->popup_centered();
+}
+
 void SceneTreeDock::open_script_dialog(Node *p_for_node, bool p_extend) {
 	scene_tree->set_selected(p_for_node, false);
 
@@ -4446,6 +4483,13 @@ void SceneTreeDock::open_add_child_dialog() {
 	create_dialog->set_base_type("CanvasItem");
 	_tool_selected(TOOL_NEW, true);
 	reset_create_dialog = true;
+}
+
+void SceneTreeDock::open_add_component_dialog() {
+	// Orostride: the new node is a component of the selected game object (shown in its Inspector).
+	create_dialog->set_base_type("Node");
+	_tool_selected(TOOL_NEW, true);
+	adding_component = true;
 }
 
 void SceneTreeDock::open_instance_child_dialog() {

@@ -789,6 +789,14 @@ private:
 	bool show_custom_categories = false;
 	bool hide_script = true;
 	bool hide_metadata = true;
+	// Orostride: Unity-style Inspector (see ComponentInspectorPlugin).
+	Vector<StringName> hidden_property_classes;
+	Vector<StringName> shown_property_classes;
+	Vector<StringName> hidden_property_names;
+	Vector<StringName> effective_hidden_classes;
+	bool unity_object_layout = false;
+	bool unity_object_layout_active = false; // The edited object is a game object.
+	bool _is_hidden_by_class(const StringName &p_class_or_property, bool p_is_class) const;
 	bool use_doc_hints = false;
 	EditorPropertyNameProcessor::Style property_name_style = EditorPropertyNameProcessor::STYLE_CAPITALIZED;
 	bool use_settings_name_style = true;
@@ -925,6 +933,15 @@ public:
 	void set_use_doc_hints(bool p_enable);
 	void set_hide_script(bool p_hide);
 	void set_hide_metadata(bool p_hide);
+	// Hides the properties declared by these classes (not by their subclasses).
+	void set_hidden_property_classes(const Vector<StringName> &p_classes) { hidden_property_classes = p_classes; }
+	// Shows only the properties declared by these classes.
+	void set_shown_property_classes(const Vector<StringName> &p_classes) { shown_property_classes = p_classes; }
+	void set_hidden_property_names(const Vector<StringName> &p_names) { hidden_property_names = p_names; }
+	bool is_unity_object_layout() const { return unity_object_layout; }
+	// Game objects: node, canvas item and transform settings are moved out of the main list
+	// (the transform and an "Advanced" section are added by ComponentInspectorPlugin).
+	void set_unity_object_layout(bool p_enable) { unity_object_layout = p_enable; }
 
 	void set_use_filter(bool p_use);
 	void register_text_enter(Node *p_line_edit);

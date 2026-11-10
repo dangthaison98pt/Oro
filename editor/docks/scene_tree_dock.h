@@ -103,6 +103,10 @@ class SceneTreeDock : public EditorDock {
 	Vector<ObjectID> subresources;
 
 	bool reset_create_dialog = false;
+	bool adding_component = false;
+	ObjectID script_target_component; // Orostride: "Attach Script" from a component's menu.
+	void _clear_script_target_component() { script_target_component = ObjectID(); }
+	static String adding_component_action_name(Node *p_child) { return p_child->has_meta(SNAME("_component")) ? TTR("Add Component") : TTR("Create Node"); }
 
 	int current_option = 0;
 
@@ -357,6 +361,8 @@ public:
 	void open_shader_dialog(const Ref<ShaderMaterial> &p_for_material, int p_preferred_mode = -1);
 
 	void open_add_child_dialog();
+	void open_add_component_dialog();
+	void attach_script_to_component(Node *p_component);
 	void open_instance_child_dialog();
 
 	List<Node *> paste_nodes(bool p_paste_as_sibling = false);

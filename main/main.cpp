@@ -4941,6 +4941,8 @@ bool Main::iteration() {
 	double scaled_step = process_step * time_scale;
 
 	Engine::get_singleton()->_process_step = process_step;
+	Engine::get_singleton()->_unity_time += scaled_step;
+	Engine::get_singleton()->_unity_unscaled_time += process_step;
 	Engine::get_singleton()->_physics_interpolation_fraction = advance.interpolation_fraction;
 
 	uint64_t physics_process_ticks = 0;

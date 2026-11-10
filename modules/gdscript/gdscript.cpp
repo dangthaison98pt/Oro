@@ -89,6 +89,7 @@ bool GDScriptNativeClass::_get(const StringName &p_name, Variant &r_ret) const {
 
 void GDScriptNativeClass::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("new"), &GDScriptNativeClass::_new);
+	ClassDB::bind_method(D_METHOD("get_native_class_name"), &GDScriptNativeClass::get_native_class_name);
 }
 
 Variant GDScriptNativeClass::_new() {
@@ -108,8 +109,8 @@ Object *GDScriptNativeClass::instantiate() {
 }
 
 Variant GDScriptNativeClass::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
-	if (p_method == SNAME("new")) {
-		// Constructor.
+	if (p_method == SNAME("new") || p_method == SNAME("get_native_class_name")) {
+		// Constructor (or the class name, used by Node.GetComponent()).
 		return Object::callp(p_method, p_args, p_argcount, r_error);
 	}
 	MethodBind *method = ClassDB::get_method(name, p_method);

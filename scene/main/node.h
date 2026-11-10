@@ -757,6 +757,29 @@ public:
 
 	void set_process_mode(ProcessMode p_mode);
 	ProcessMode get_process_mode() const;
+
+	// Orostride: Unity-style component API. The PascalCase names are intentional, to match Unity.
+	// `p_type` is a class name (String/StringName), a native class (e.g. `Sprite2D`) or a script.
+	// Type given to GetComponent(), resolved once per call.
+	struct UnityTypeQuery {
+		StringName class_name; // Native class, or a script `class_name`.
+		const Script *script = nullptr;
+		bool valid = false;
+	};
+	static UnityTypeQuery unity_resolve_type(const Variant &p_type);
+	static bool unity_matches(const Node *p_node, const UnityTypeQuery &p_query);
+	static bool unity_matches_type(const Node *p_node, const Variant &p_type);
+	// True for nodes shown as components of their parent (Inspector) instead of objects (Hierarchy).
+	bool unity_is_component() const;
+	virtual Node *unity_get_game_object() { return this; }
+	virtual Node *GetComponent(const Variant &p_type);
+	virtual TypedArray<Node> GetComponents(const Variant &p_type);
+	virtual Node *GetComponentInChildren(const Variant &p_type);
+	virtual Node *GetComponentInParent(const Variant &p_type);
+	virtual bool CompareTag(const String &p_tag);
+	void SetActive(bool p_active);
+	bool unity_is_active_self() const;
+
 	bool can_process() const;
 	bool can_process_notification(int p_what) const;
 
