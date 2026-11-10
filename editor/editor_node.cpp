@@ -8347,7 +8347,7 @@ HashMap<String, Variant> EditorNode::get_initial_settings() {
 	HashMap<String, Variant> settings;
 	settings["display/window/stretch/aspect"] = "expand";
 	settings["display/window/stretch/mode"] = "canvas_items";
-	settings["physics/3d/physics_engine"] = "Jolt Physics";
+	settings["physics/3d/physics_engine"] = "Dummy"; // Oro is 2D-only.
 	settings["rendering/rendering_device/driver.windows"] = "d3d12";
 	return settings;
 }

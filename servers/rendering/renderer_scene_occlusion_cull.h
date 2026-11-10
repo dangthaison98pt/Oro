@@ -32,6 +32,7 @@
 
 #include "core/io/image.h"
 #include "core/math/projection.h"
+#include "core/string/print_string.h"
 #include "core/templates/local_vector.h"
 #include "servers/rendering/rendering_server_enums.h"
 
@@ -208,7 +209,12 @@ public:
 	static RendererSceneOcclusionCull *get_singleton() { return singleton; }
 
 	void _print_warning() {
-		WARN_PRINT_ONCE("Occlusion culling is disabled at build-time.");
+		// Oro is 2D-only and builds without the raycast module by default, so this is expected.
+		static bool printed = false;
+		if (!printed) {
+			printed = true;
+			print_verbose("Occlusion culling is disabled at build-time.");
+		}
 	}
 
 	virtual bool is_occluder(RID p_rid) { return false; }

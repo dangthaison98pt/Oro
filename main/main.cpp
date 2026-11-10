@@ -367,8 +367,9 @@ void initialize_physics() {
 	}
 
 	// Fall back to dummy if no default server has been registered.
+	// Oro is 2D-only and ships without 3D physics servers by default, so this is expected.
 	if (!physics_server_3d) {
-		WARN_PRINT(vformat("Falling back to dummy PhysicsServer3D; 3D physics functionality will be disabled. If this is intended, set the %s project setting to Dummy.", PhysicsServer3DManager::setting_property_name));
+		print_verbose("Using dummy PhysicsServer3D; 3D physics functionality is disabled.");
 		physics_server_3d = memnew(PhysicsServer3DDummy);
 	}
 

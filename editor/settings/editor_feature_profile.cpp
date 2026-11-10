@@ -104,7 +104,34 @@ bool EditorFeatureProfile::is_class_disabled(const StringName &p_class) const {
 	if (p_class == StringName()) {
 		return false;
 	}
-	return disabled_classes.has(p_class) || is_class_disabled(ClassDB::get_parent_class_nocheck(p_class));
+	return disabled_classes.has(p_class) || is_class_locked(p_class) || is_class_disabled(ClassDB::get_parent_class_nocheck(p_class));
+}
+
+bool EditorFeatureProfile::is_feature_locked(Feature p_feature) {
+	return p_feature == FEATURE_3D;
+}
+
+bool EditorFeatureProfile::is_class_locked(const StringName &p_class) {
+	// 3D-only base classes. Their descendants are disabled through is_class_disabled() walking up the hierarchy.
+	static const HashSet<StringName> locked_classes = {
+		"Node3D",
+		"Shape3D",
+		"BaseMaterial3D",
+		"FogMaterial",
+		"Sky",
+		"ProceduralSkyMaterial",
+		"PanoramaSkyMaterial",
+		"PhysicalSkyMaterial",
+		"Occluder3D",
+		"NavigationMesh",
+		"NavigationMeshSourceGeometryData3D",
+		"MeshLibrary",
+		"Skin",
+		"World3D",
+		"LightmapGIData",
+		"VoxelGIData",
+	};
+	return locked_classes.has(p_class);
 }
 
 void EditorFeatureProfile::set_disable_class_editor(const StringName &p_class, bool p_disabled) {
@@ -173,7 +200,7 @@ void EditorFeatureProfile::set_disable_feature(Feature p_feature, bool p_disable
 
 bool EditorFeatureProfile::is_feature_disabled(Feature p_feature) const {
 	ERR_FAIL_INDEX_V(p_feature, FEATURE_MAX, false);
-	return features_disabled[p_feature];
+	return features_disabled[p_feature] || is_feature_locked(p_feature);
 }
 
 String EditorFeatureProfile::get_feature_name(Feature p_feature) {
@@ -891,7 +918,14 @@ void EditorFeatureProfileManager::notify_changed() {
 }
 
 Ref<EditorFeatureProfile> EditorFeatureProfileManager::get_current_profile() {
-	return current;
+	if (current.is_valid()) {
+		return current;
+	}
+	// No profile selected: return an empty profile so Oro's locked (3D) features still apply.
+	if (default_profile.is_null()) {
+		default_profile.instantiate();
+	}
+	return default_profile;
 }
 
 String EditorFeatureProfileManager::get_current_profile_name() const {

@@ -259,7 +259,13 @@ opts.Add(BoolVariable("vsproj", "Generate a Visual Studio solution", False))
 opts.Add("vsproj_name", "Name of the Visual Studio solution", "godot")
 opts.Add("import_env_vars", "A comma-separated list of environment variables to copy from the outer environment.", "")
 opts.Add(BoolVariable("disable_exceptions", "Force disabling exception handling code", True))
-opts.Add(BoolVariable("disable_3d", "Disable 3D nodes for a smaller executable", False))
+opts.Add(
+    BoolVariable(
+        "disable_3d",
+        "Disable 3D nodes for a smaller executable (Oro: enabled by default for export templates)",
+        False,
+    )
+)
 opts.Add(BoolVariable("disable_advanced_gui", "Disable advanced GUI nodes and behaviors", False))
 opts.Add(BoolVariable("disable_physics_2d", "Disable 2D physics nodes and server", False))
 opts.Add(BoolVariable("disable_physics_3d", "Disable 3D physics nodes and server", False))
@@ -1092,6 +1098,10 @@ if env.editor_build:
             )
         )
         Exit(255)
+
+# Oro is a 2D-only engine: export templates are built without 3D unless `disable_3d` is set explicitly.
+if not env.editor_build and "disable_3d" not in ARGUMENTS and "disable_3d" not in custom_values:
+    env["disable_3d"] = True
 
 if env["disable_3d"]:
     env.Append(CPPDEFINES=["_3D_DISABLED"])
