@@ -45,7 +45,9 @@
 #include "editor/settings/editor_settings.h"
 #include "editor/themes/editor_scale.h"
 #include "editor/themes/editor_theme_manager.h"
+#ifndef _3D_DISABLED
 #include "scene/3d/mesh_instance_3d.h"
+#endif // _3D_DISABLED
 #include "scene/gui/panel_container.h"
 #include "scene/gui/split_container.h"
 #include "scene/gui/texture_rect.h"
@@ -646,6 +648,7 @@ Ref<ShaderMaterial> TextShaderPreview::_get_source_material() const {
 		return Ref<ShaderMaterial>();
 	}
 
+#ifndef _3D_DISABLED
 	const GeometryInstance3D *gi = Object::cast_to<GeometryInstance3D>(object);
 	if (gi) {
 		const Ref<ShaderMaterial> material_overlay = gi->get_material_overlay();
@@ -673,6 +676,7 @@ Ref<ShaderMaterial> TextShaderPreview::_get_source_material() const {
 			}
 		}
 	}
+#endif // _3D_DISABLED
 
 	return Ref<ShaderMaterial>();
 }

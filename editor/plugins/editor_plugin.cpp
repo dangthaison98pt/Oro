@@ -48,12 +48,16 @@
 #include "editor/file_system/editor_file_system.h"
 #include "editor/gui/editor_bottom_panel.h"
 #include "editor/gui/editor_title_bar.h"
+#ifndef _3D_DISABLED
 #include "editor/import/3d/resource_importer_scene.h"
+#endif // _3D_DISABLED
 #include "editor/import/editor_import_plugin.h"
 #include "editor/inspector/editor_inspector.h"
 #include "editor/plugins/editor_plugin_list.h"
 #include "editor/plugins/editor_resource_conversion_plugin.h"
+#ifndef _3D_DISABLED
 #include "editor/scene/3d/node_3d_editor_plugin.h"
+#endif // _3D_DISABLED
 #include "editor/scene/canvas_item_editor_plugin.h"
 #include "editor/script/script_editor_plugin.h"
 #include "editor/settings/project_settings_editor.h"
@@ -145,6 +149,7 @@ void EditorPlugin::add_control_to_container(CustomControlContainer p_location, C
 			EditorNode::get_title_bar()->add_child(p_control);
 		} break;
 
+#ifndef _3D_DISABLED
 		case CONTAINER_SPATIAL_EDITOR_MENU: {
 			Node3DEditor::get_singleton()->add_control_to_menu_panel(p_control);
 
@@ -159,6 +164,14 @@ void EditorPlugin::add_control_to_container(CustomControlContainer p_location, C
 			Node3DEditor::get_singleton()->get_shader_split()->add_child(p_control);
 
 		} break;
+#else
+		case CONTAINER_SPATIAL_EDITOR_MENU:
+		case CONTAINER_SPATIAL_EDITOR_SIDE_LEFT:
+		case CONTAINER_SPATIAL_EDITOR_SIDE_RIGHT:
+		case CONTAINER_SPATIAL_EDITOR_BOTTOM: {
+			// Oro is 2D-only: there is no 3D editor to add controls to.
+		} break;
+#endif // _3D_DISABLED
 		case CONTAINER_CANVAS_EDITOR_MENU: {
 			CanvasItemEditor::get_singleton()->add_control_to_menu_panel(p_control);
 
@@ -197,6 +210,7 @@ void EditorPlugin::remove_control_from_container(CustomControlContainer p_locati
 			EditorNode::get_title_bar()->remove_child(p_control);
 		} break;
 
+#ifndef _3D_DISABLED
 		case CONTAINER_SPATIAL_EDITOR_MENU: {
 			Node3DEditor::get_singleton()->remove_control_from_menu_panel(p_control);
 
@@ -211,6 +225,14 @@ void EditorPlugin::remove_control_from_container(CustomControlContainer p_locati
 			Node3DEditor::get_singleton()->get_shader_split()->remove_child(p_control);
 
 		} break;
+#else
+		case CONTAINER_SPATIAL_EDITOR_MENU:
+		case CONTAINER_SPATIAL_EDITOR_SIDE_LEFT:
+		case CONTAINER_SPATIAL_EDITOR_SIDE_RIGHT:
+		case CONTAINER_SPATIAL_EDITOR_BOTTOM: {
+			// Oro is 2D-only: there is no 3D editor to add controls to.
+		} break;
+#endif // _3D_DISABLED
 		case CONTAINER_CANVAS_EDITOR_MENU: {
 			CanvasItemEditor::get_singleton()->remove_control_from_menu_panel(p_control);
 
@@ -305,6 +327,7 @@ void EditorPlugin::forward_canvas_force_draw_over_viewport(Control *p_overlay) {
 
 // Updates the overlays of the 2D viewport or, if in 3D mode, of every 3D viewport.
 int EditorPlugin::update_overlays() const {
+#ifndef _3D_DISABLED
 	if (Node3DEditor::get_singleton()->is_visible()) {
 		int count = 0;
 		for (uint32_t i = 0; i < Node3DEditor::VIEWPORTS_COUNT; i++) {
@@ -315,7 +338,9 @@ int EditorPlugin::update_overlays() const {
 			}
 		}
 		return count;
-	} else {
+	} else
+#endif // _3D_DISABLED
+	{
 		// This will update the normal viewport itself as well
 		CanvasItemEditor::get_singleton()->get_viewport_control()->queue_redraw();
 		return 1;
@@ -324,7 +349,9 @@ int EditorPlugin::update_overlays() const {
 
 EditorPlugin::AfterGUIInput EditorPlugin::forward_3d_gui_input(Camera3D *p_camera, const Ref<InputEvent> &p_event) {
 	int success = EditorPlugin::AFTER_GUI_INPUT_PASS;
+#ifndef _3D_DISABLED
 	GDVIRTUAL_CALL(_forward_3d_gui_input, p_camera, p_event, success);
+#endif // _3D_DISABLED
 	return static_cast<EditorPlugin::AfterGUIInput>(success);
 }
 
@@ -482,12 +509,16 @@ void EditorPlugin::remove_export_platform(const Ref<EditorExportPlatform> &p_pla
 
 void EditorPlugin::add_node_3d_gizmo_plugin(const Ref<EditorNode3DGizmoPlugin> &p_gizmo_plugin) {
 	ERR_FAIL_COND(p_gizmo_plugin.is_null());
+#ifndef _3D_DISABLED
 	Node3DEditor::get_singleton()->add_gizmo_plugin(p_gizmo_plugin);
+#endif // _3D_DISABLED
 }
 
 void EditorPlugin::remove_node_3d_gizmo_plugin(const Ref<EditorNode3DGizmoPlugin> &p_gizmo_plugin) {
 	ERR_FAIL_COND(p_gizmo_plugin.is_null());
+#ifndef _3D_DISABLED
 	Node3DEditor::get_singleton()->remove_gizmo_plugin(p_gizmo_plugin);
+#endif // _3D_DISABLED
 }
 
 void EditorPlugin::add_inspector_plugin(const Ref<EditorInspectorPlugin> &p_plugin) {
@@ -502,20 +533,28 @@ void EditorPlugin::remove_inspector_plugin(const Ref<EditorInspectorPlugin> &p_p
 
 void EditorPlugin::add_scene_format_importer_plugin(const Ref<EditorSceneFormatImporter> &p_importer, bool p_first_priority) {
 	ERR_FAIL_COND(p_importer.is_null());
+#ifndef _3D_DISABLED
 	ResourceImporterScene::add_scene_importer(p_importer, p_first_priority);
+#endif // _3D_DISABLED
 }
 
 void EditorPlugin::remove_scene_format_importer_plugin(const Ref<EditorSceneFormatImporter> &p_importer) {
 	ERR_FAIL_COND(p_importer.is_null());
+#ifndef _3D_DISABLED
 	ResourceImporterScene::remove_scene_importer(p_importer);
+#endif // _3D_DISABLED
 }
 
 void EditorPlugin::add_scene_post_import_plugin(const Ref<EditorScenePostImportPlugin> &p_plugin, bool p_first_priority) {
+#ifndef _3D_DISABLED
 	ResourceImporterScene::add_post_importer_plugin(p_plugin, p_first_priority);
+#endif // _3D_DISABLED
 }
 
 void EditorPlugin::remove_scene_post_import_plugin(const Ref<EditorScenePostImportPlugin> &p_plugin) {
+#ifndef _3D_DISABLED
 	ResourceImporterScene::remove_post_importer_plugin(p_plugin);
+#endif // _3D_DISABLED
 }
 
 void EditorPlugin::add_context_menu_plugin(EditorContextMenuPlugin::ContextMenuSlot p_slot, const Ref<EditorContextMenuPlugin> &p_plugin) {
@@ -661,16 +700,20 @@ void EditorPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("remove_translation_parser_plugin", "parser"), &EditorPlugin::remove_translation_parser_plugin);
 	ClassDB::bind_method(D_METHOD("add_import_plugin", "importer", "first_priority"), &EditorPlugin::add_import_plugin, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_import_plugin", "importer"), &EditorPlugin::remove_import_plugin);
+#ifndef _3D_DISABLED
 	ClassDB::bind_method(D_METHOD("add_scene_format_importer_plugin", "scene_format_importer", "first_priority"), &EditorPlugin::add_scene_format_importer_plugin, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_scene_format_importer_plugin", "scene_format_importer"), &EditorPlugin::remove_scene_format_importer_plugin);
 	ClassDB::bind_method(D_METHOD("add_scene_post_import_plugin", "scene_import_plugin", "first_priority"), &EditorPlugin::add_scene_post_import_plugin, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_scene_post_import_plugin", "scene_import_plugin"), &EditorPlugin::remove_scene_post_import_plugin);
+#endif // _3D_DISABLED
 	ClassDB::bind_method(D_METHOD("add_export_plugin", "plugin"), &EditorPlugin::add_export_plugin);
 	ClassDB::bind_method(D_METHOD("remove_export_plugin", "plugin"), &EditorPlugin::remove_export_plugin);
 	ClassDB::bind_method(D_METHOD("add_export_platform", "platform"), &EditorPlugin::add_export_platform);
 	ClassDB::bind_method(D_METHOD("remove_export_platform", "platform"), &EditorPlugin::remove_export_platform);
+#ifndef _3D_DISABLED
 	ClassDB::bind_method(D_METHOD("add_node_3d_gizmo_plugin", "plugin"), &EditorPlugin::add_node_3d_gizmo_plugin);
 	ClassDB::bind_method(D_METHOD("remove_node_3d_gizmo_plugin", "plugin"), &EditorPlugin::remove_node_3d_gizmo_plugin);
+#endif // _3D_DISABLED
 	ClassDB::bind_method(D_METHOD("add_inspector_plugin", "plugin"), &EditorPlugin::add_inspector_plugin);
 	ClassDB::bind_method(D_METHOD("remove_inspector_plugin", "plugin"), &EditorPlugin::remove_inspector_plugin);
 	ClassDB::bind_method(D_METHOD("add_resource_conversion_plugin", "plugin"), &EditorPlugin::add_resource_conversion_plugin);
@@ -689,7 +732,9 @@ void EditorPlugin::_bind_methods() {
 	GDVIRTUAL_BIND(_forward_canvas_gui_input, "event");
 	GDVIRTUAL_BIND(_forward_canvas_draw_over_viewport, "viewport_control");
 	GDVIRTUAL_BIND(_forward_canvas_force_draw_over_viewport, "viewport_control");
+#ifndef _3D_DISABLED
 	GDVIRTUAL_BIND(_forward_3d_gui_input, "viewport_camera", "event");
+#endif // _3D_DISABLED
 	GDVIRTUAL_BIND(_forward_3d_draw_over_viewport, "viewport_control");
 	GDVIRTUAL_BIND(_forward_3d_force_draw_over_viewport, "viewport_control");
 	GDVIRTUAL_BIND(_get_plugin_name);

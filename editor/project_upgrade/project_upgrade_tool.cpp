@@ -40,7 +40,9 @@
 #include "editor/scene/editor_scene_tabs.h"
 #include "editor/settings/editor_settings.h"
 #include "editor/themes/editor_scale.h"
+#ifndef _3D_DISABLED
 #include "scene/3d/mesh_instance_3d.h"
+#endif // _3D_DISABLED
 #include "scene/gui/dialogs.h"
 
 void ProjectUpgradeTool::_add_files(EditorFileSystemDirectory *p_dir, Vector<String> &r_reimport_paths, Vector<String> &r_resave_scenes, Vector<String> &r_resave_resources) {
@@ -113,7 +115,9 @@ void ProjectUpgradeTool::finish_upgrade() {
 	EditorSettings::get_singleton()->set_project_metadata(META_PROJECT_UPGRADE_TOOL, META_REIMPORT_PATHS, Variant());
 
 #ifndef DISABLE_DEPRECATED
+#ifndef _3D_DISABLED
 	MeshInstance3D::upgrading_skeleton_compat = true;
+#endif // _3D_DISABLED
 #endif
 
 	{
@@ -131,7 +135,9 @@ void ProjectUpgradeTool::finish_upgrade() {
 	}
 
 #ifndef DISABLE_DEPRECATED
+#ifndef _3D_DISABLED
 	MeshInstance3D::upgrading_skeleton_compat = false;
+#endif // _3D_DISABLED
 #endif
 
 	{

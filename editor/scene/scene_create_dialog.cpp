@@ -40,7 +40,9 @@
 #include "editor/settings/editor_feature_profile.h"
 #include "editor/themes/editor_scale.h"
 #include "scene/2d/node_2d.h"
+#ifndef _3D_DISABLED
 #include "scene/3d/node_3d.h"
+#endif // _3D_DISABLED
 #include "scene/gui/box_container.h"
 #include "scene/gui/check_box.h"
 #include "scene/gui/grid_container.h"
@@ -172,9 +174,11 @@ Node *SceneCreateDialog::create_scene_root() {
 		case ROOT_2D_SCENE:
 			root = memnew(Node2D);
 			break;
+#ifndef _3D_DISABLED
 		case ROOT_3D_SCENE:
 			root = memnew(Node3D);
 			break;
+#endif // _3D_DISABLED
 		case ROOT_USER_INTERFACE: {
 			Control *gui_ctl = memnew(Control);
 			// Making the root control full rect by default is more useful for resizable UIs.

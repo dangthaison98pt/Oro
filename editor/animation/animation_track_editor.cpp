@@ -51,7 +51,9 @@
 #include "editor/script/script_editor_plugin.h"
 #include "editor/settings/editor_settings.h"
 #include "editor/themes/editor_scale.h"
+#ifndef _3D_DISABLED
 #include "scene/3d/mesh_instance_3d.h"
+#endif // _3D_DISABLED
 #include "scene/animation/animation_player.h"
 #include "scene/animation/tween.h"
 #include "scene/gui/check_box.h"
@@ -6038,6 +6040,7 @@ void AnimationTrackEditor::_insert_key_from_track(float p_ofs, int p_track) {
 	// id.value is filled in each case handled below.
 
 	switch (animation->track_get_type(p_track)) {
+#ifndef _3D_DISABLED
 		case Animation::TYPE_POSITION_3D: {
 			Node3D *base = Object::cast_to<Node3D>(node);
 
@@ -6078,6 +6081,16 @@ void AnimationTrackEditor::_insert_key_from_track(float p_ofs, int p_track) {
 
 			id.value = base->get_blend_shape_value(base->find_blend_shape_by_name(id.path.get_subname(0)));
 		} break;
+#else
+		case Animation::TYPE_POSITION_3D:
+		case Animation::TYPE_ROTATION_3D:
+		case Animation::TYPE_SCALE_3D:
+		case Animation::TYPE_BLEND_SHAPE: {
+			// Oro is 2D-only: 3D nodes don't exist, so these tracks can't be keyed from the editor.
+			EditorNode::get_singleton()->show_warning(TTR("3D tracks can't be keyed in Oro, which is 2D-only."));
+			return;
+		} break;
+#endif // _3D_DISABLED
 		case Animation::TYPE_VALUE: {
 			NodePath bp;
 			_find_hint_for_track(p_track, bp, &id.value);

@@ -122,7 +122,9 @@ protected:
 	GDVIRTUAL1R(bool, _forward_canvas_gui_input, Ref<InputEvent>)
 	GDVIRTUAL1(_forward_canvas_draw_over_viewport, Control *)
 	GDVIRTUAL1(_forward_canvas_force_draw_over_viewport, Control *)
+#ifndef _3D_DISABLED
 	GDVIRTUAL2R(int, _forward_3d_gui_input, Camera3D *, Ref<InputEvent>)
+#endif // _3D_DISABLED
 	GDVIRTUAL1(_forward_3d_draw_over_viewport, Control *)
 	GDVIRTUAL1(_forward_3d_force_draw_over_viewport, Control *)
 	GDVIRTUAL0RC(String, _get_plugin_name)

@@ -262,7 +262,7 @@ opts.Add(BoolVariable("disable_exceptions", "Force disabling exception handling 
 opts.Add(
     BoolVariable(
         "disable_3d",
-        "Disable 3D nodes for a smaller executable (Oro: enabled by default for export templates)",
+        "Disable 3D nodes for a smaller executable (Oro: enabled by default)",
         False,
     )
 )
@@ -1081,13 +1081,11 @@ sys.modules.pop("detect")
 
 if env.editor_build:
     unsupported_opts = []
+    # Oro's editor supports disabling 3D (it is 2D-only by default).
     for disable_opt in [
-        "disable_3d",
         "disable_advanced_gui",
         "disable_physics_2d",
-        "disable_physics_3d",
         "disable_navigation_2d",
-        "disable_navigation_3d",
     ]:
         if env[disable_opt]:
             unsupported_opts.append(disable_opt)
@@ -1099,8 +1097,8 @@ if env.editor_build:
         )
         Exit(255)
 
-# Oro is a 2D-only engine: export templates are built without 3D unless `disable_3d` is set explicitly.
-if not env.editor_build and "disable_3d" not in ARGUMENTS and "disable_3d" not in custom_values:
+# Oro is a 2D-only engine: everything is built without 3D unless `disable_3d` is set explicitly.
+if "disable_3d" not in ARGUMENTS and "disable_3d" not in custom_values:
     env["disable_3d"] = True
 
 if env["disable_3d"]:
