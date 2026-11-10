@@ -38,7 +38,10 @@
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/debugger/script_editor_debugger.h"
 #include "editor/editor_interface.h"
+#include "editor/docks/editor_dock.h"
+#include "editor/docks/editor_dock_manager.h"
 #include "editor/editor_main_screen.h"
+#include "scene/gui/scroll_container.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
 #include "editor/gui/editor_bottom_panel.h"
@@ -567,7 +570,7 @@ void GameView::_play_pressed() {
 		EditorNode::get_singleton()->set_unfocused_low_processor_usage_mode_enabled(false);
 		_update_embed_window_size();
 		if (!window_wrapper->get_window_enabled()) {
-			EditorNode::get_singleton()->get_editor_main_screen()->select(EditorMainScreen::EDITOR_GAME);
+			_open_game_dock();
 			// Reset the normal size of the bottom panel when fully expanded.
 			EditorNode::get_singleton()->get_bottom_panel()->set_expanded(false);
 
@@ -620,7 +623,14 @@ void GameView::_embedding_failed() {
 
 void GameView::_embedded_process_focused() {
 	if (embed_on_play && !window_wrapper->get_window_enabled()) {
-		EditorNode::get_singleton()->get_editor_main_screen()->select(EditorMainScreen::EDITOR_GAME);
+		_open_game_dock();
+	}
+}
+
+void GameView::_open_game_dock() {
+	EditorDock *dock = Object::cast_to<EditorDock>(window_wrapper->get_parent());
+	if (dock) {
+		EditorDockManager::get_singleton()->open_dock(dock, true);
 	}
 }
 
@@ -1175,7 +1185,7 @@ void GameView::_notification(int p_what) {
 					} break;
 					default: {
 						embed_on_play = EditorSettings::get_singleton()->get_project_metadata("game_view", "embed_on_play", true);
-						make_floating_on_play = EditorSettings::get_singleton()->get_project_metadata("game_view", "make_floating_on_play", true);
+						make_floating_on_play = EditorSettings::get_singleton()->get_project_metadata("game_view", "make_floating_on_play", false); // Orostride: embed in the Game dock by default.
 					} break;
 				}
 				embed_size_mode = (EmbedSizeMode)(int)EditorSettings::get_singleton()->get_project_metadata("game_view", "embed_size_mode", SIZE_MODE_FIXED);
@@ -1348,7 +1358,8 @@ void GameView::_update_arguments_for_instance(int p_idx, List<String> &r_argumen
 		Size2 old_min_size = embedded_process->get_custom_minimum_size();
 		embedded_process->set_custom_minimum_size(Size2i());
 
-		Control *container = EditorNode::get_singleton()->get_editor_main_screen()->get_control();
+		Control *container = Object::cast_to<Control>(window_wrapper->get_parent());
+		ERR_FAIL_NULL(container);
 		rect = container->get_global_rect();
 
 		Size2 wrapped_min_size = window_wrapper->get_minimum_size();
@@ -1443,9 +1454,16 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, EmbeddedProcessBase *p_embe
 	toolbar_margin->set_theme_type_variation("MainToolBarMargin");
 	add_child(toolbar_margin);
 
+	// Orostride: the game view is a dock next to the main screen, so its toolbar scrolls horizontally
+	// when the dock is narrow, instead of forcing a large minimum width on the dock.
+	ScrollContainer *toolbar_scroll = memnew(ScrollContainer);
+	toolbar_scroll->set_vertical_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED);
+	toolbar_scroll->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_AUTO);
+	toolbar_margin->add_child(toolbar_scroll);
+
 	// FIXME: Turn this back into a FlowContainer once GH-115523 is fixed.
 	HBoxContainer *main_menu_fc = memnew(HBoxContainer);
-	toolbar_margin->add_child(main_menu_fc);
+	toolbar_scroll->add_child(main_menu_fc);
 
 	HBoxContainer *process_hb = memnew(HBoxContainer);
 	main_menu_fc->add_child(process_hb);
@@ -1715,11 +1733,7 @@ void GameViewPluginBase::selected_notify() {
 
 #ifndef ANDROID_ENABLED
 void GameViewPluginBase::make_visible(bool p_visible) {
-	if (p_visible) {
-		window_wrapper->show();
-	} else {
-		window_wrapper->hide();
-	}
+	// Orostride: the game view is a dock, so it stays visible whichever main screen is selected.
 }
 
 void GameViewPluginBase::set_window_layout(Ref<ConfigFile> p_layout) {
@@ -1741,9 +1755,18 @@ void GameViewPluginBase::setup(Ref<GameViewDebugger> p_debugger, EmbeddedProcess
 
 	window_wrapper->set_wrapped_control(game_view, nullptr);
 
-	EditorNode::get_singleton()->get_editor_main_screen()->get_control()->add_child(window_wrapper);
+	// Orostride: like Unity's Game tab, the game view is a dock shown next to the main screen
+	// (so the 2D editor and the running game are visible at the same time), not a main screen.
+	EditorDock *game_dock = memnew(EditorDock);
+	game_dock->set_name(TTRC("Game"));
+	game_dock->set_layout_key("Game");
+	game_dock->set_icon_name("Game");
+	game_dock->set_default_slot(EditorDock::DOCK_SLOT_RIGHT_UL);
+	game_dock->set_available_layouts(EditorDock::DOCK_LAYOUT_VERTICAL | EditorDock::DOCK_LAYOUT_HORIZONTAL);
+	game_dock->set_custom_minimum_size(Size2(480, 0) * EDSCALE); // Like Unity's Game view: a usable width next to the scene.
+	game_dock->add_child(window_wrapper);
 	window_wrapper->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	window_wrapper->hide();
+	EditorDockManager::get_singleton()->add_dock(game_dock);
 	window_wrapper->connect("window_visibility_changed", callable_mp(this, &GameViewPlugin::_focus_another_editor).unbind(1));
 }
 

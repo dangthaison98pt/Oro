@@ -7936,7 +7936,7 @@ void EditorNode::_feature_profile_changed() {
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_3D, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D));
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_SCRIPT, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SCRIPT));
 		if (!Engine::get_singleton()->is_recovery_mode_hint()) {
-			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_GAME, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_GAME));
+			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_GAME, false); // Orostride: the game view is a dock.
 		}
 		if (AssetLibraryEditorPlugin::is_available()) {
 			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_ASSETLIB, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_ASSET_LIB));
@@ -7950,7 +7950,7 @@ void EditorNode::_feature_profile_changed() {
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_3D, true);
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_SCRIPT, true);
 		if (!Engine::get_singleton()->is_recovery_mode_hint()) {
-			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_GAME, true);
+			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_GAME, false); // Orostride: the game view is a dock.
 		}
 		if (AssetLibraryEditorPlugin::is_available()) {
 			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_ASSETLIB, true);
@@ -9331,8 +9331,10 @@ EditorNode::EditorNode() {
 		const String inspector_key = InspectorDock::get_singleton()->get_effective_layout_key();
 		const String signals_key = SignalsDock::get_singleton()->get_effective_layout_key();
 		const String groups_key = GroupsDock::get_singleton()->get_effective_layout_key();
-		default_layout->set_value(docks_section, "dock_5", vformat("%s,%s,%s", inspector_key, signals_key, groups_key)); // DOCK_SLOT_RIGHT_UL
+		default_layout->set_value(docks_section, "dock_5", "Game"); // DOCK_SLOT_RIGHT_UL, added later by the game view plugin.
 		default_layout->set_value(docks_section, "dock_5_selected_tab_idx", 0);
+		default_layout->set_value(docks_section, "dock_7", vformat("%s,%s,%s", inspector_key, signals_key, groups_key)); // DOCK_SLOT_RIGHT_UR
+		default_layout->set_value(docks_section, "dock_7_selected_tab_idx", 0);
 	}
 	{
 		const String scene_key = SceneTreeDock::get_singleton()->get_effective_layout_key();
@@ -9351,7 +9353,8 @@ EditorNode::EditorNode() {
 	default_layout->set_value(docks_section, "dock_main_split", -80);
 	default_layout->set_value(docks_section, "dock_bottom_split", -360);
 
-	int hsplits[] = { 0, dock_hsize, -right_dock_hsize, 0 };
+	// Right side: the Game dock (left column) and the inspector (right column).
+	int hsplits[] = { 0, dock_hsize, 0, 0 }; // Game and inspector widths come from their minimum sizes.
 	for (int i = 0; i < (int)std_size(hsplits); i++) {
 		default_layout->set_value(docks_section, "dock_hsplit_" + itos(i + 1), hsplits[i]);
 	}
