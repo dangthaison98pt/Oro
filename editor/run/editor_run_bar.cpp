@@ -459,6 +459,22 @@ void EditorRunBar::play_custom_scene(const String &p_custom, const Vector<String
 	_run_scene(p_custom, p_play_args);
 }
 
+void EditorRunBar::shortcut_input(const Ref<InputEvent> &p_event) {
+	ERR_FAIL_COND(p_event.is_null());
+	if (!p_event->is_pressed() || p_event->is_echo()) {
+		return;
+	}
+	// Unity-style Play / Stop toggle.
+	if (ED_IS_SHORTCUT("editor/play_stop_toggle", p_event)) {
+		if (is_playing()) {
+			stop_playing();
+		} else {
+			play_current_scene();
+		}
+		accept_event();
+	}
+}
+
 void EditorRunBar::stop_playing() {
 	if (editor_run.get_status() == EditorRun::STATUS_STOP) {
 		return;
@@ -645,6 +661,8 @@ EditorRunBar::EditorRunBar() {
 	stop_button->connect(SceneStringName(pressed), callable_mp(this, &EditorRunBar::stop_playing));
 
 	ED_SHORTCUT("editor/stop_running_project", TTRC("Stop Running Project"), Key::F8);
+	ED_SHORTCUT("editor/play_stop_toggle", TTRC("Play / Stop Current Scene"), KeyModifierMask::CMD_OR_CTRL | Key::P);
+	set_process_shortcut_input(true);
 	ED_SHORTCUT_OVERRIDE("editor/stop_running_project", "macos", KeyModifierMask::META | Key::PERIOD);
 	stop_button->set_shortcut(ED_GET_SHORTCUT("editor/stop_running_project"));
 

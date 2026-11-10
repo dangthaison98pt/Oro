@@ -5545,6 +5545,11 @@ void EditorNode::_quick_opened(const String &p_file_path) {
 }
 
 void EditorNode::_project_run_started() {
+	// Play Mode tint: docks and title bar, not the main screen (so the game view keeps its colors).
+	const Color play_mode_tint = EDITOR_GET("interface/editor/play_mode_tint");
+	editor_dock_manager->set_dock_slots_modulate(play_mode_tint);
+	title_bar->set_modulate(play_mode_tint);
+
 	if (bool(EDITOR_GET("run/output/always_clear_output_on_play"))) {
 		log->clear();
 	}
@@ -5558,6 +5563,9 @@ void EditorNode::_project_run_started() {
 }
 
 void EditorNode::_project_run_stopped() {
+	editor_dock_manager->set_dock_slots_modulate(Color(1, 1, 1));
+	title_bar->set_modulate(Color(1, 1, 1));
+
 	int action_on_stop = EDITOR_GET("run/bottom_panel/action_on_stop");
 	if (action_on_stop == ACTION_ON_STOP_CLOSE_BUTTOM_PANEL) {
 		bottom_panel->hide_bottom_panel();

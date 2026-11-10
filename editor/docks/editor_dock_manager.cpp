@@ -195,6 +195,12 @@ void EditorDockManager::_update_layout() {
 	EditorNode::get_singleton()->save_editor_layout_delayed();
 }
 
+void EditorDockManager::set_dock_slots_modulate(const Color &p_color) {
+	for (int i = 0; i < EditorDock::DOCK_SLOT_MAX; i++) {
+		dock_slots[i]->set_modulate(p_color);
+	}
+}
+
 void EditorDockManager::update_docks_menu() {
 	docks_menu->clear();
 	docks_menu->reset_size();

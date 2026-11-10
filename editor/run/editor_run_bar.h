@@ -122,6 +122,7 @@ public:
 
 	void play_main_scene(bool p_from_native = false, const Vector<String> &p_play_args = Vector<String>());
 	void play_current_scene(bool p_reload = false, const Vector<String> &p_play_args = Vector<String>());
+	virtual void shortcut_input(const Ref<InputEvent> &p_event) override;
 	void play_custom_scene(const String &p_custom, const Vector<String> &p_play_args = Vector<String>());
 
 	void stop_playing();

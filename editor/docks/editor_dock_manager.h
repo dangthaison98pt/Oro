@@ -130,6 +130,7 @@ public:
 	static EditorDockManager *get_singleton() { return singleton; }
 
 	void update_docks_menu();
+	void set_dock_slots_modulate(const Color &p_color);
 	void update_tab_styles();
 	void set_tab_icon_max_width(int p_max_width);
 

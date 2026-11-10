@@ -36,6 +36,7 @@
 #include "editor/debugger/editor_debugger_inspector.h"
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/docks/filesystem_dock.h"
+#include "editor/docks/scene_tree_dock.h"
 #include "editor/editor_main_screen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
@@ -552,6 +553,7 @@ void InspectorDock::update(Object *p_object) {
 	const bool is_resource = is_object && p_object->is_class("Resource");
 	const bool is_text_file = is_object && p_object->is_class("TextFile");
 	const bool is_node = is_object && p_object->is_class("Node");
+	add_component_button->set_visible(is_node && !is_text_file);
 
 	object_menu->set_disabled(!is_object || is_text_file);
 	search->set_editable(is_object && !is_text_file);
@@ -862,6 +864,16 @@ InspectorDock::InspectorDock(EditorData &p_editor_data) {
 
 	inspector = EditorInspector::create_default_inspector(search);
 	mc->add_child(inspector);
+
+	// Unity-style "Add Component": adds a child node (e.g. a collision shape or a sprite) to the selected node.
+	add_component_button = memnew(Button);
+	add_component_button->set_text(TTRC("Add Component"));
+	add_component_button->set_tooltip_text(TTRC("Add a child node to the selected node, like adding a component in Unity."));
+	add_component_button->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	add_component_button->set_custom_minimum_size(Size2(200, 0) * EDSCALE);
+	add_component_button->hide();
+	add_component_button->connect(SceneStringName(pressed), callable_mp(SceneTreeDock::get_singleton(), &SceneTreeDock::open_add_child_dialog));
+	main_vb->add_child(add_component_button);
 	inspector->connect("resource_selected", callable_mp(this, &InspectorDock::_resource_selected));
 
 	FileSystemDock::get_singleton()->connect("files_moved", callable_mp(this, &InspectorDock::_files_moved));

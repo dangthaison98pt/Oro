@@ -91,6 +91,7 @@ class InspectorDock : public EditorDock {
 
 	Button *open_docs_button = nullptr;
 	MenuButton *object_menu = nullptr;
+	Button *add_component_button = nullptr;
 	EditorObjectSelector *object_selector = nullptr;
 
 	bool info_is_warning = false; // Display in yellow and use warning icon if true.
