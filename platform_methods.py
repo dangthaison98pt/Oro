@@ -175,7 +175,7 @@ def combine_libs_apple_embedded(target, source, env):
 def lipo_and_copy_apple_embedded(
     platform, framework_dir, framework_dir_sim, rel_prefix, dbg_prefix, module_prefix, app_dir, env
 ):
-    bin_dir = env.Dir("#bin").abspath
+    bin_dir = env.Dir(env["bin_dir"]).abspath
 
     # Lipo template libraries.
     #
@@ -268,7 +268,7 @@ def generate_bundle_apple_embedded(platform, framework_dir, framework_dir_sim, u
         rel_prefix += ".double"
         dbg_prefix += ".double"
 
-    app_dir = env.Dir("#bin/" + platform + "_xcode").abspath
+    app_dir = env.Dir(env["bin_dir"] + "/" + platform + "_xcode").abspath
     templ = env.Dir("#misc/dist/apple_embedded_xcode").abspath
     if os.path.exists(app_dir):
         shutil.rmtree(app_dir)
@@ -299,7 +299,7 @@ def generate_bundle_apple_embedded(platform, framework_dir, framework_dir_sim, u
             shutil.copy(mvk_path + "/Info.plist", app_dir + "/MoltenVK.xcframework/Info.plist")
 
     # ZIP Xcode project bundle.
-    zip_dir = env.Dir("#bin/" + (app_prefix + extra_suffix).replace(".", "_")).abspath
+    zip_dir = env.Dir(env["bin_dir"] + "/" + (app_prefix + extra_suffix).replace(".", "_")).abspath
     shutil.make_archive(zip_dir, "zip", root_dir=app_dir)
     shutil.rmtree(app_dir)
 

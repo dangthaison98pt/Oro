@@ -25,7 +25,7 @@ if "LIBS_EXTERNAL" in env_visionos:
     env_visionos.Depends(visionos_lib, env_visionos["LIBS_EXTERNAL"])
 
 combine_command = env_visionos.Command(
-    "#bin/libgodot" + env_visionos["LIBSUFFIX"], [visionos_lib] + env_visionos["LIBS"], combine_libs_apple_embedded
+    env["bin_dir"] + "/libgodot" + env_visionos["LIBSUFFIX"], [visionos_lib] + env_visionos["LIBS"], combine_libs_apple_embedded
 )
 
 if env["generate_bundle"]:

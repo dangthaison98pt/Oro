@@ -22,6 +22,17 @@ base_folder = Path(__file__).resolve().parent
 
 compiler_version_cache = None
 
+
+def resolve_bin_dir(build_dir):
+    """
+    Returns the absolute build output directory (forward slashes) for the `build_dir` option,
+    which may be absolute or relative to the repository root.
+    """
+    path = Path(os.path.expanduser(build_dir or "bin"))
+    if not path.is_absolute():
+        path = base_folder / path
+    return path.resolve().as_posix()
+
 # Listing all the folders we have converted
 # for SCU in scu_builders.py
 _scu_folders = set()
@@ -95,16 +106,17 @@ def redirect_emitter(target, source, env):
     if not env["redirect_build_objects"]:
         return target, source
 
+    bin_dir = Path(env["bin_dir"])
     redirected_targets = []
     for item in target:
         path = Path(item.get_abspath()).resolve()
 
-        if path.parent == base_folder / "bin":
+        if path.parent == bin_dir or bin_dir in path.parents:
             pass
         elif base_folder in path.parents:
-            item = env.File(f"#bin/obj/{path.relative_to(base_folder)}")
+            item = env.File(f"{env['bin_dir']}/obj/{path.relative_to(base_folder).as_posix()}")
         elif (alt_base := Path(env.Dir(".").get_abspath()).resolve().parent) in path.parents:
-            item = env.File(f"#bin/obj/external/{path.relative_to(alt_base)}")
+            item = env.File(f"{env['bin_dir']}/obj/external/{path.relative_to(alt_base).as_posix()}")
         else:
             print_warning(f'Failed to redirect "{path}"')
         redirected_targets.append(item)
@@ -818,7 +830,7 @@ def show_progress(env):
     if env["ninja"]:
         return
 
-    NODE_COUNT_FILENAME = base_folder / ".scons_node_count"
+    NODE_COUNT_FILENAME = Path(env["bin_dir"]) / ".scons_node_count"
 
     class ShowProgress:
         def __init__(self):
@@ -978,7 +990,7 @@ def dump(env):
     Dumps latest build information for debugging purposes and external tools.
     """
 
-    with open(".scons_env.json", "w", encoding="utf-8", newline="\n") as file:
+    with open(os.path.join(env["bin_dir"], ".scons_env.json"), "w", encoding="utf-8", newline="\n") as file:
         file.write(env.Dump(format="json"))
 
 
@@ -1234,7 +1246,7 @@ def generate_vs_project(env, original_args, project_name="godot"):
     others_active = []
 
     get_dependencies(
-        env.File(f"#bin/oro{env['PROGSUFFIX']}"), env, extensions, headers_active, sources_active, others_active
+        env.File(f"{env['bin_dir']}/oro{env['PROGSUFFIX']}"), env, extensions, headers_active, sources_active, others_active
     )
 
     all_items = []
@@ -1295,7 +1307,7 @@ def generate_vs_project(env, original_args, project_name="godot"):
             properties.append(
                 "<ActiveProjectItemList_%s>;%s;</ActiveProjectItemList_%s>" % (x, ";".join(itemlist[x]), x)
             )
-        output = os.path.join("bin", f"oro{env['PROGSUFFIX']}")
+        output = os.path.join(env["bin_dir"], f"oro{env['PROGSUFFIX']}")
 
         # The modules_enabled.gen.h header containing the defines is only generated on build, and only for the most recently built
         # platform, which means VS can't properly render code that's inside module-specific ifdefs. This adds those defines to the

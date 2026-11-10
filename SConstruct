@@ -10,6 +10,7 @@ import os
 import pickle
 import sys
 from collections import OrderedDict
+from pathlib import Path
 from importlib.util import module_from_spec, spec_from_file_location
 from types import ModuleType
 
@@ -140,9 +141,6 @@ env.__class__.module_check_dependencies = methods.module_check_dependencies
 
 env["x86_libtheora_opt_gcc"] = False
 env["x86_libtheora_opt_vc"] = False
-
-# avoid issues when building with different versions of python out of the same directory
-env.SConsignFile(File("#.sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)).abspath)
 
 # Build options
 
@@ -300,9 +298,14 @@ opts.Add(BoolVariable("steamapi", "Enable minimal SteamAPI integration for usage
 opts.Add("cache_path", "Path to a directory where SCons cache files will be stored. No value disables the cache.", "")
 opts.Add("cache_limit", "Max size (in GiB) for the SCons cache. 0 means no limit.", "0")
 opts.Add(
+    "build_dir",
+    "Directory for compiled binaries, build objects and SCons state (absolute, or relative to the repository root).",
+    "bin",
+)
+opts.Add(
     BoolVariable(
         "redirect_build_objects",
-        "Enable redirecting built objects/libraries to `bin/obj/` to declutter the repository.",
+        "Enable redirecting built objects/libraries to `<build_dir>/obj/` to declutter the repository.",
         True,
     )
 )
@@ -369,6 +372,13 @@ opts.Add("cpp_compiler_launcher", "C++ compiler launcher (e.g. `ccache`)")
 # in following code (especially platform and custom_modules).
 opts.Update(env)
 
+# Resolve the build output directory. `bin_dir` is the absolute path used by all build scripts.
+env["bin_dir"] = methods.resolve_bin_dir(env["build_dir"])
+os.makedirs(env["bin_dir"], exist_ok=True)
+
+# avoid issues when building with different versions of python out of the same directory
+env.SConsignFile(os.path.join(env["bin_dir"], ".sconsign{0}.dblite".format(pickle.HIGHEST_PROTOCOL)))
+
 # Setup caching logic early to catch everything.
 methods.prepare_cache(env)
 
@@ -432,9 +442,18 @@ if env["platform"] in platform_opts:
 # These can sometimes override default options, so they need to be processed
 # as early as possible to ensure that we're using the correct values.
 flag_list = platform_flags[env["platform"]]
+# Values set in custom files (`custom.py`, `profile=`) may also override platform flags.
+custom_values = {}
+for custom_file in customs:
+    if os.path.isfile(custom_file):
+        with open(custom_file, "r", encoding="utf-8") as f:
+            exec(f.read(), {}, custom_values)
 for key, value in flag_list.items():
-    if key not in ARGUMENTS or ARGUMENTS[key] == "auto":  # Allow command line to override platform flags
-        env[key] = value
+    if key in ARGUMENTS and ARGUMENTS[key] != "auto":  # Allow command line to override platform flags
+        continue
+    if key in custom_values and custom_values[key] != "auto":
+        continue
+    env[key] = value
 
 # Update the environment to take platform-specific options into account.
 opts.Update(env, {**ARGUMENTS, **env.Dictionary()})
@@ -497,6 +516,7 @@ env.modules_detected = modules_detected
 
 # Update the environment again after all the module options are added.
 opts.Update(env, {**ARGUMENTS, **env.Dictionary()})
+env["bin_dir"] = methods.resolve_bin_dir(env["build_dir"])
 Help(opts.GenerateHelpText(env))
 
 
@@ -1240,6 +1260,11 @@ if env["tests"]:
 SConscript("main/SCsub")
 
 SConscript("platform/" + env["platform"] + "/SCsub")  # Build selected platform.
+
+# SCons only builds targets under the repository root (".") by default.
+# Also build everything under `build_dir` when it lives outside the repository.
+if not Path(env["bin_dir"]).is_relative_to(Path(methods.base_folder)):
+    Default(".", env["bin_dir"])
 
 # Microsoft Visual Studio Project Generation
 if env["vsproj"]:

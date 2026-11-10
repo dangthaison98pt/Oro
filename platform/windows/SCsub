@@ -65,7 +65,7 @@ def arrange_program_clean(prog):
     extensions_to_clean = [".ilk", ".exp", ".pdb", ".lib"]
     for program in prog:
         executable_stem = Path(program.name).stem
-        extra_files_to_clean = [f"#bin/{executable_stem}{extension}" for extension in extensions_to_clean]
+        extra_files_to_clean = [f"{env['bin_dir']}/{executable_stem}{extension}" for extension in extensions_to_clean]
         Clean(prog, extra_files_to_clean)
 
 
@@ -112,11 +112,11 @@ if env["accesskit"] and not env.msvc:
     sources += env.DEFLIB("uiautomationcore")
 
 if env["library_type"] == "static_library":
-    prog = env.add_library("#bin/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
+    prog = env.add_library(env["bin_dir"] + "/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
 elif env["library_type"] == "shared_library":
-    prog = env.add_shared_library("#bin/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
+    prog = env.add_shared_library(env["bin_dir"] + "/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
 else:
-    prog = env.add_program("#bin/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
+    prog = env.add_program(env["bin_dir"] + "/oro", sources, PROGSUFFIX=env["PROGSUFFIX"])
 arrange_program_clean(prog)
 
 env.Depends(prog, "godot.manifest")
@@ -141,7 +141,7 @@ if env["windows_subsystem"] == "gui":
         env_wrap.Append(LINKFLAGS=["-Wl,--subsystem,console"])
         env_wrap.Append(LIBS=["version"])
 
-    prog_wrap = env_wrap.add_program("#bin/oro", common_win_wrap + res_wrap_obj, PROGSUFFIX=env["PROGSUFFIX_WRAP"])
+    prog_wrap = env_wrap.add_program(env["bin_dir"] + "/oro", common_win_wrap + res_wrap_obj, PROGSUFFIX=env["PROGSUFFIX_WRAP"])
     arrange_program_clean(prog_wrap)
     env_wrap.Depends(prog_wrap, prog)
     sources += common_win_wrap + res_wrap_obj
@@ -164,13 +164,13 @@ if env["d3d12"]:
     agility_arch_subdir = agility_target_aliases[env["arch"]]
 
     # Used in cases where we can have multiple archs side-by-side.
-    arch_bin_dir = "#bin/" + env["arch"]
+    arch_bin_dir = env["bin_dir"] + "/" + env["arch"]
 
     # Agility SDK
     if env["agility_sdk_path"] != "" and os.path.exists(env["agility_sdk_path"]):
         agility_dlls = ["D3D12Core.dll", "d3d12SDKLayers.dll"]
         # Whether these are loaded from arch-specific directory or not has to be known at build time.
-        target_dir = arch_bin_dir if env["agility_sdk_multiarch"] else "#bin"
+        target_dir = arch_bin_dir if env["agility_sdk_multiarch"] else env["bin_dir"]
         for dll in agility_dlls:
             env.CommandNoCache(
                 target_dir + "/" + dll,
@@ -182,7 +182,7 @@ if env["d3d12"]:
     if env["use_pix"]:
         pix_dll = "WinPixEventRuntime.dll"
         env.CommandNoCache(
-            "#bin/" + pix_dll,
+            env["bin_dir"] + "/" + pix_dll,
             env["pix_path"] + "/bin/" + dxc_arch_subdir + "/" + pix_dll,
             Copy("$TARGET", "$SOURCE"),
         )
