@@ -295,6 +295,7 @@ struct OutLine {
 };
 
 struct TypeInfo {
+	String source_name; // Name as written (e.g. "Action").
 	String hint; // Type hint in the target language, empty for Variant.
 	String name; // Mapped type name, without generics (to call constructors).
 	bool is_void = false;
@@ -309,6 +310,63 @@ class Translator {
 	Vector<OroScriptTranslator::Error> &errors;
 	HashSet<String> local_types; // Enums and classes declared in this file.
 	HashSet<String> string_expressions; // Translated expressions known to be strings.
+	Vector<bool> break_targets; // Innermost last: true for a switch, false for a loop.
+	bool last_statement_assigns = false; // Set by parse_simple_statement().
+
+	// Delegates: variables holding lambdas are called with .call(), and a lambda assigned to an
+	// Action doesn't return its body's value (a void call has none).
+	enum CallableKind {
+		CALLABLE_NONE,
+		CALLABLE_VOID, // Action
+		CALLABLE_VALUE, // Func, Predicate
+		CALLABLE_UNKNOWN, // var f = x => ...;
+	};
+	HashMap<String, CallableKind> callables; // By variable name (all scopes).
+	CallableKind lambda_context = CALLABLE_NONE; // For the next lambda.
+
+	static CallableKind callable_kind_of(const TypeInfo &p_type) {
+		const String &name = p_type.source_name;
+		if (name == "Action" || name == "UnityAction") {
+			return CALLABLE_VOID;
+		}
+		if (name == "Func" || name == "Predicate" || name == "Comparison") {
+			return CALLABLE_VALUE;
+		}
+		return p_type.hint == "Callable" ? CALLABLE_UNKNOWN : CALLABLE_NONE;
+	}
+
+	// Parses an initializer for a variable of the given type and remembers delegates.
+	String parse_initializer(const String &p_name, const TypeInfo &p_type) {
+		lambda_context = callable_kind_of(p_type);
+		const String value = parse_expression();
+		lambda_context = CALLABLE_NONE;
+		CallableKind kind = callable_kind_of(p_type);
+		if (kind == CALLABLE_NONE && value.begins_with("(func(")) {
+			kind = CALLABLE_UNKNOWN;
+		}
+		if (kind != CALLABLE_NONE) {
+			callables[p_name] = kind;
+		}
+		return value;
+	}
+
+	void declare_variable(const String &p_name, const TypeInfo &p_type) {
+		const CallableKind kind = callable_kind_of(p_type);
+		if (kind != CALLABLE_NONE) {
+			callables[p_name] = kind;
+		} else {
+			callables.erase(p_name);
+		}
+	}
+
+	// Members that can't go on their own line (e.g. `int X => x * 2;` needs a getter function)
+	// are captured and emitted at the end of their class.
+	struct CapturedLine {
+		int line = 0;
+		OutLine out_line;
+	};
+	Vector<CapturedLine> *capture = nullptr;
+	Vector<Vector<CapturedLine>> pending_stack;
 
 	String mark_string(const String &p_expression) {
 		string_expressions.insert(p_expression);
@@ -420,12 +478,29 @@ class Translator {
 
 	// --- Output ---
 
+	bool line_free(int p_line) const {
+		return capture == nullptr && out[CLAMP(p_line, 1, out.size()) - 1].is_empty();
+	}
+
 	void emit(int p_line, int p_indent, const String &p_text, bool p_header = false) {
-		Vector<OutLine> &slot = out.write[CLAMP(p_line, 1, out.size()) - 1];
 		OutLine line;
 		line.indent = p_indent;
 		line.text = p_text;
 		line.header = p_header;
+		if (capture) {
+			CapturedLine captured;
+			captured.line = p_line;
+			captured.out_line = line;
+			capture->push_back(captured);
+			return;
+		}
+		emit_into(out.write[CLAMP(p_line, 1, out.size()) - 1], line);
+	}
+
+	void emit_into(Vector<OutLine> &slot, const OutLine &line) {
+		const int p_indent = line.indent;
+		const String &p_text = line.text;
+		const bool p_header = line.header;
 		if (!slot.is_empty()) {
 			OutLine &last = slot.write[slot.size() - 1];
 			if (!p_header) {
@@ -455,7 +530,8 @@ class Translator {
 				{ "uint", "int" }, { "ulong", "int" }, { "ushort", "int" },
 				{ "float", "float" }, { "double", "float" }, { "decimal", "float" },
 				{ "bool", "bool" }, { "string", "String" }, { "char", "String" }, { "object", "Variant" },
-				{ "KeyCode", "int" },
+				{ "KeyCode", "int" }, { "Action", "Callable" }, { "Func", "Callable" }, { "Predicate", "Callable" },
+				{ "UnityAction", "Callable" }, { "Delegate", "Callable" },
 				// Unity names for the engine's classes.
 				{ "GameObject", "Node" }, { "Component", "Node" }, { "Behaviour", "Node" }, { "MonoBehaviour", "MonoBehaviour" },
 				{ "Rigidbody2D", "RigidBody2D" }, { "SpriteRenderer", "Sprite2D" }, { "AudioSource", "AudioStreamPlayer2D" },
@@ -543,6 +619,7 @@ class Translator {
 		const bool nullable = accept("?");
 
 		r_type = TypeInfo();
+		r_type.source_name = name;
 		if (name == "void") {
 			r_type.is_void = true;
 			r_type.hint = "void";
@@ -640,7 +717,60 @@ class Translator {
 	}
 
 	String parse_expression() {
+		String lambda;
+		if (try_parse_lambda(lambda)) {
+			return lambda;
+		}
 		return parse_conditional();
+	}
+
+	// x => x * 2, (a, b) => a + b, (int a) => ..., () => DoIt()
+	bool try_parse_lambda(String &r_lambda) {
+		const CallableKind context = lambda_context;
+		lambda_context = CALLABLE_NONE;
+		const int start = pos;
+		Vector<String> params;
+		if (is_ident() && is_at(1, "=>")) {
+			params.push_back(cur().text);
+			pos += 2;
+		} else if (is("(")) {
+			pos++;
+			bool ok = true;
+			while (!is(")")) {
+				TypeInfo type;
+				if (is_ident() && (is_at(1, ",") || is_at(1, ")"))) {
+					params.push_back(tokens[pos++].text);
+				} else if (try_parse_type(type) && is_ident()) {
+					params.push_back(typed_name(tokens[pos++].text, type));
+				} else {
+					ok = false;
+					break;
+				}
+				if (!accept(",")) {
+					break;
+				}
+			}
+			if (!ok || !is(")") || !is_at(1, "=>")) {
+				pos = start;
+				return false;
+			}
+			pos += 2;
+		} else {
+			return false;
+		}
+		if (is("{")) {
+			fail("Lambdas with a { } body are not supported yet. Use an expression (x => x * 2) or a method.");
+			return true;
+		}
+		const String body = parse_simple_statement();
+		bool returns = !last_statement_assigns;
+		if (context == CALLABLE_VOID) {
+			returns = false;
+		} else if (context != CALLABLE_VALUE && body.ends_with(")") && !body.begins_with("(")) {
+			returns = false; // A call (e.g. AddListener(() => Jump())), which may return nothing.
+		}
+		r_lambda = "(func(" + String(", ").join(params) + "): " + (returns ? "return " + body : body) + ")";
+		return true;
 	}
 
 	String parse_conditional() {
@@ -831,7 +961,7 @@ class Translator {
 					expression += text[j];
 					j++;
 				}
-				// Format specifiers ({value:F2}) are ignored.
+				// Format specifiers: {value:F2}, {count:D3}, {value:0.00}.
 				int colon = -1;
 				int paren = 0;
 				for (int k = 0; k < expression.length(); k++) {
@@ -843,14 +973,31 @@ class Translator {
 						colon = k;
 					}
 				}
+				String spec;
 				if (colon >= 0 && expression.find_char('?') < 0) {
+					spec = expression.substr(colon + 1).strip_edges();
 					expression = expression.substr(0, colon);
 				}
 				if (!literal.is_empty()) {
 					parts.push_back("\"" + literal + "\"");
 					literal = String();
 				}
-				parts.push_back("str(" + translate_sub_expression(expression, p_token) + ")");
+				const String value = translate_sub_expression(expression, p_token);
+				String part = "str(" + value + ")";
+				if (!spec.is_empty()) {
+					const char32_t kind = spec[0];
+					const String digits = spec.substr(1);
+					if ((kind == 'F' || kind == 'f' || kind == 'N' || kind == 'n') && (digits.is_empty() || digits.is_valid_int())) {
+						part = "(\"%." + (digits.is_empty() ? String("2") : digits) + "f\" % " + value + ")";
+					} else if ((kind == 'D' || kind == 'd') && (digits.is_empty() || digits.is_valid_int())) {
+						part = "(\"%0" + (digits.is_empty() ? String("1") : digits) + "d\" % " + value + ")";
+					} else if (kind == '0' || kind == '#') {
+						const int dot = spec.find_char('.');
+						const int decimals = dot < 0 ? 0 : spec.length() - dot - 1;
+						part = "(\"%." + itos(decimals) + "f\" % " + value + ")";
+					}
+				}
+				parts.push_back(part);
 				i = j + 1;
 				continue;
 			}
@@ -933,15 +1080,37 @@ class Translator {
 		}
 		if (word == "new") {
 			pos++;
-			const Token &type_token = cur();
+			if (is("[") && is_at(1, "]")) {
+				pos += 2;
+				return parse_list_initializer(); // new[] { 1, 2 }
+			}
+			const Token type_token = cur();
 			const TypeInfo type = parse_type();
-			if (is("{")) {
-				fail("Object and collection initializers are not supported yet.", type_token);
-			}
 			if (is("[")) {
-				fail("\"new T[n]\" arrays are not supported yet. Use a List<T> or [].", type_token);
+				// new int[n] -> an array of n default values.
+				pos++;
+				const String size = parse_expression();
+				expect("]");
+				if (is("{")) {
+					return parse_list_initializer();
+				}
+				const bool typed = !type.hint.is_empty() && !type.hint.contains_char('[');
+				return "(func(): var a" + (typed ? ": Array[" + type.hint + "]" : String()) + " = []; a.resize(" + size + "); return a).call()";
 			}
-			const String args = parse_arguments();
+			String args = "()";
+			if (is("(")) {
+				args = parse_arguments();
+			}
+			if (is("{")) {
+				if (type.name == "Array") {
+					return parse_list_initializer(); // new List<int> { 1, 2 }, new int[] { 1, 2 }
+				}
+				if (type.name == "Dictionary") {
+					return parse_dictionary_initializer();
+				}
+				fail("Object initializers (new T { X = 1 }) are not supported yet.", type_token);
+				return String();
+			}
 			if (type.name == "Array") {
 				return args == "()" ? String("[]") : "Array" + args;
 			}
@@ -962,7 +1131,51 @@ class Translator {
 		if (try_parse_generic_call_args(type_args)) {
 			return word + parse_arguments(type_args);
 		}
+		if (is("(") && callables.has(word)) {
+			return word + ".call" + parse_arguments(); // square(5) -> square.call(5)
+		}
 		return word;
+	}
+
+	String parse_list_initializer() {
+		expect("{");
+		Vector<String> items;
+		while (!is("}") && !at_end()) {
+			items.push_back(parse_expression());
+			if (!accept(",")) {
+				break;
+			}
+		}
+		expect("}");
+		return "[" + String(", ").join(items) + "]";
+	}
+
+	// { { "a", 1 }, ["b"] = 2 } -> { "a": 1, "b": 2 }
+	String parse_dictionary_initializer() {
+		expect("{");
+		Vector<String> items;
+		while (!is("}") && !at_end()) {
+			if (accept("{")) {
+				const String key = parse_expression();
+				expect(",");
+				const String value = parse_expression();
+				expect("}");
+				items.push_back(key + ": " + value);
+			} else if (accept("[")) {
+				const String key = parse_expression();
+				expect("]");
+				expect("=");
+				items.push_back(key + ": " + parse_expression());
+			} else {
+				fail("Expected { key, value } or [key] = value.");
+				break;
+			}
+			if (!accept(",")) {
+				break;
+			}
+		}
+		expect("}");
+		return "{" + String(", ").join(items) + "}";
 	}
 
 	String parse_postfix(String p_base) {
@@ -979,6 +1192,10 @@ class Translator {
 					p_base = "len(" + p_base + ")"; // List.Count, array.Length, string.Length
 					continue;
 				}
+				if (member == "Invoke" && is("(")) {
+					p_base += ".call" + parse_arguments(); // Action / Func delegates.
+					continue;
+				}
 				Vector<TypeInfo> type_args;
 				if (try_parse_generic_call_args(type_args)) {
 					p_base += "." + member + parse_arguments(type_args);
@@ -993,7 +1210,14 @@ class Translator {
 				expect("]");
 				p_base += "[" + index + "]";
 			} else if (is("?.")) {
-				fail("\"?.\" is not supported yet.");
+				// a?.b -> (a.b if a != null else null)
+				pos++;
+				const String member = expect_ident();
+				String access = p_base + "." + (member == "Invoke" ? String("call") : member);
+				if (is("(")) {
+					access += parse_arguments();
+				}
+				p_base = "(" + access + " if " + p_base + " != null else null)";
 			} else {
 				return p_base;
 			}
@@ -1004,6 +1228,7 @@ class Translator {
 
 	// Expression statement, assignment or increment (without the trailing ';').
 	String parse_simple_statement() {
+		last_statement_assigns = true; // Cleared below for plain expressions.
 		if (is("++") || is("--")) {
 			const bool increment = is("++");
 			pos++;
@@ -1021,7 +1246,11 @@ class Translator {
 			if (is(assignments[i])) {
 				const String op = assignments[i];
 				pos++;
-				return target + " " + op + " " + parse_expression();
+				const CallableKind *kind = callables.getptr(target);
+				lambda_context = kind ? *kind : CALLABLE_NONE;
+				const String value = parse_expression();
+				lambda_context = CALLABLE_NONE;
+				return target + " " + op + " " + value;
 			}
 		}
 		if (is(">") && is_at(1, ">") && is_at(2, "=")) {
@@ -1033,6 +1262,7 @@ class Translator {
 			const String value = parse_expression();
 			return "if " + target + " == null: " + target + " = " + value;
 		}
+		last_statement_assigns = false;
 		return target;
 	}
 
@@ -1047,8 +1277,9 @@ class Translator {
 		while (true) {
 			const String name = expect_ident();
 			String text = (p_constant ? "const " : "var ") + typed_name(name, type);
+			declare_variable(name, type);
 			if (accept("=")) {
-				text += " = " + parse_expression();
+				text += " = " + parse_initializer(name, type);
 			}
 			emit(p_line, p_indent, text);
 			if (!accept(",")) {
@@ -1141,13 +1372,17 @@ class Translator {
 				const String condition = parse_expression();
 				expect(")");
 				emit(line, p_indent, "while " + condition + ":", true);
+				break_targets.push_back(false);
 				parse_body(p_indent + 1, line);
+				break_targets.remove_at(break_targets.size() - 1);
 				return 1;
 			}
 			if (word == "do") {
 				pos++;
 				emit(line, p_indent, "while true:", true);
+				break_targets.push_back(false);
 				parse_body(p_indent + 1, line);
+				break_targets.remove_at(break_targets.size() - 1);
 				const int while_line = cur().line;
 				if (!accept("while")) {
 					fail("Expected \"while\" after the body of \"do\".");
@@ -1161,7 +1396,9 @@ class Translator {
 			}
 			if (word == "for") {
 				pos++;
+				break_targets.push_back(false);
 				parse_for(p_indent, line);
+				break_targets.remove_at(break_targets.size() - 1);
 				return 1;
 			}
 			if (word == "foreach") {
@@ -1176,7 +1413,9 @@ class Translator {
 				expect(")");
 				(void)type;
 				emit(line, p_indent, "for " + name + " in " + collection + ":", true);
+				break_targets.push_back(false);
 				parse_body(p_indent + 1, line);
+				break_targets.remove_at(break_targets.size() - 1);
 				return 1;
 			}
 			if (word == "return") {
@@ -1190,6 +1429,9 @@ class Translator {
 				return 1;
 			}
 			if (word == "break" || word == "continue") {
+				if (word == "break" && !break_targets.is_empty() && break_targets[break_targets.size() - 1]) {
+					fail("\"break\" can only end a switch case. Inside an if, use return or a flag.");
+				}
 				pos++;
 				expect(";");
 				emit(line, p_indent, word);
@@ -1202,7 +1444,12 @@ class Translator {
 				}
 				return 1;
 			}
-			if (word == "switch" || word == "try" || word == "throw" || word == "goto" || word == "lock" || word == "using" || word == "yield" || word == "unsafe" || word == "fixed") {
+			if (word == "switch") {
+				pos++;
+				parse_switch(p_indent, line);
+				return 1;
+			}
+			if (word == "try" || word == "throw" || word == "goto" || word == "lock" || word == "using" || word == "yield" || word == "unsafe" || word == "fixed") {
 				fail(vformat("\"%s\" is not supported yet.", word));
 			}
 			if (try_parse_local_declaration(p_indent, line, false)) {
@@ -1214,6 +1461,57 @@ class Translator {
 		expect(";");
 		emit(line, p_indent, text);
 		return 1;
+	}
+
+	// switch (x) { case 1: case 2: ...; break; default: ...; break; } -> match x:
+	void parse_switch(int p_indent, int p_line) {
+		expect("(");
+		const String value = parse_expression();
+		expect(")");
+		emit(p_line, p_indent, "match " + value + ":", true);
+		expect("{");
+		int sections = 0;
+		while (!is("}") && !at_end()) {
+			Vector<String> patterns;
+			const int label_line = cur().line;
+			while (is("case") || is("default")) {
+				if (accept("default")) {
+					patterns.push_back("_");
+				} else {
+					pos++;
+					patterns.push_back(parse_conditional());
+					if (is("when")) {
+						fail("\"case ... when\" is not supported yet.");
+						return;
+					}
+				}
+				expect(":");
+			}
+			if (patterns.is_empty()) {
+				fail("Expected \"case\" or \"default\".");
+				return;
+			}
+			emit(label_line, p_indent + 1, String(", ").join(patterns) + ":", true);
+			sections++;
+			int count = 0;
+			break_targets.push_back(true);
+			while (!is("case") && !is("default") && !is("}") && !at_end()) {
+				if (is("break") && is_at(1, ";")) {
+					pos += 2; // Ends the case (match cases don't fall through).
+					continue;
+				}
+				count += parse_statement(p_indent + 2);
+			}
+			break_targets.remove_at(break_targets.size() - 1);
+			if (count == 0) {
+				emit(label_line, p_indent + 2, "pass");
+			}
+		}
+		const int close_line = cur().line;
+		expect("}");
+		if (sections == 0) {
+			emit(close_line, p_indent + 1, "_: pass");
+		}
 	}
 
 	void parse_for(int p_indent, int p_line) {
@@ -1421,7 +1719,9 @@ class Translator {
 			return;
 		}
 		if (is("{") || is("=>")) {
-			fail("Properties ({ get; set; }) are not supported yet. Use a field.", name_token);
+			parse_property(p_indent, name_token, name, type, modifiers);
+			r_count++;
+			return;
 		}
 
 		// Field(s).
@@ -1458,8 +1758,9 @@ class Translator {
 			const String field_name = text.is_empty() ? name : name;
 			(void)field_name;
 			text += typed_name(name, type);
+			declare_variable(name, type);
 			if (accept("=")) {
-				text += " = " + parse_expression();
+				text += " = " + parse_initializer(name, type);
 			}
 			emit(name_token.line, p_indent, text);
 			r_count++;
@@ -1486,6 +1787,146 @@ class Translator {
 		expect(";");
 	}
 
+	void begin_capture(Vector<CapturedLine> &r_lines) {
+		capture = &r_lines;
+	}
+
+	void end_capture(Vector<CapturedLine> &r_lines) {
+		capture = nullptr;
+		if (!pending_stack.is_empty()) {
+			pending_stack.write[pending_stack.size() - 1].append_array(r_lines);
+		}
+	}
+
+	// Accessor function (_get_X / _set_X) at its own line, or at the end of the class if its
+	// line is taken.
+	void parse_accessor(int p_indent, int p_line, const String &p_kind, const String &p_property, const TypeInfo &p_type, bool p_static) {
+		const String function = "_" + p_kind + "_" + p_property;
+		String header = p_static ? "static func " : "func ";
+		if (p_kind == "get") {
+			header += function + "()" + (p_type.hint.is_empty() ? String() : " -> " + p_type.hint) + ":";
+		} else {
+			header += function + "(" + typed_name("value", p_type) + "):";
+		}
+		Vector<CapturedLine> captured;
+		const bool deferred = !line_free(p_line);
+		if (deferred) {
+			begin_capture(captured);
+		}
+		emit(p_line, p_indent, header, true);
+		if (accept("=>")) {
+			const int line = cur().line;
+			const String value = parse_simple_statement();
+			expect(";");
+			emit(line, p_indent + 1, p_kind == "get" ? "return " + value : value);
+		} else {
+			parse_block(p_indent + 1);
+		}
+		if (deferred) {
+			end_capture(captured);
+		}
+	}
+
+	// int Health { get; private set; } = 3;   -> var Health: int = 3
+	// int Health { get { ... } set { ... } }  -> var Health: int: get = _get_Health, set = _set_Health
+	// int Double => value * 2;                -> var Double: int: get = _get_Double
+	void parse_property(int p_indent, const Token &p_name_token, const String &p_name, const TypeInfo &p_type, const HashSet<String> &p_modifiers) {
+		const bool is_static = p_modifiers.has("static");
+		const String var_text = (is_static ? "static var " : "var ") + typed_name(p_name, p_type);
+
+		if (is("=>")) {
+			emit(p_name_token.line, p_indent, var_text + ": get = _get_" + p_name);
+			parse_accessor(p_indent, p_name_token.line, "get", p_name, p_type, is_static);
+			return;
+		}
+
+		// Look ahead: which accessors are there, and do they have code?
+		bool has_get = false;
+		bool has_set = false;
+		bool has_code = false;
+		{
+			int depth = 0;
+			for (int i = pos; i < tokens.size() && tokens[i].type != Token::END; i++) {
+				const Token &t = tokens[i];
+				if (t.type == Token::PUNCT && t.text == "{") {
+					depth++;
+					if (depth > 1) {
+						has_code = true;
+					}
+				} else if (t.type == Token::PUNCT && t.text == "}") {
+					depth--;
+					if (depth == 0) {
+						break;
+					}
+				} else if (t.type == Token::PUNCT && t.text == "=>" && depth == 1) {
+					has_code = true;
+				} else if (t.type == Token::IDENT && depth == 1) {
+					if (t.text == "get") {
+						has_get = true;
+					} else if (t.text == "set" || t.text == "init") {
+						has_set = true;
+					}
+				}
+			}
+		}
+
+		if (!has_code) {
+			// Automatic property: a plain variable.
+			int depth = 0;
+			while (!at_end()) {
+				if (is("{")) {
+					depth++;
+				} else if (is("}")) {
+					depth--;
+					if (depth == 0) {
+						pos++;
+						break;
+					}
+				}
+				pos++;
+			}
+			String text = var_text;
+			if (accept("=")) {
+				text += " = " + parse_expression();
+				expect(";");
+			}
+			emit(p_name_token.line, p_indent, text);
+			return;
+		}
+
+		Vector<String> accessors;
+		if (has_get) {
+			accessors.push_back("get = _get_" + p_name);
+		}
+		if (has_set) {
+			accessors.push_back("set = _set_" + p_name);
+		}
+		emit(p_name_token.line, p_indent, var_text + ": " + String(", ").join(accessors));
+
+		expect("{");
+		while (!is("}") && !at_end()) {
+			parse_attributes();
+			while (is("private") || is("protected") || is("internal") || is("public")) {
+				pos++;
+			}
+			const Token accessor = cur();
+			String kind = expect_ident();
+			if (kind == "init") {
+				kind = "set";
+			}
+			if (kind != "get" && kind != "set") {
+				fail(vformat("Expected \"get\" or \"set\", found \"%s\".", accessor.text), accessor);
+				return;
+			}
+			if (is(";")) {
+				fail("Mixing automatic (get;) and code accessors isn't supported. Use a backing field.", accessor);
+				return;
+			}
+			parse_accessor(p_indent, accessor.line, kind, p_name, p_type, is_static);
+		}
+		expect("}");
+	}
+
 	void parse_method(int p_indent, int p_line, const String &p_name, const TypeInfo &p_return, const HashSet<String> &p_modifiers) {
 		expect("(");
 		Vector<String> params;
@@ -1496,7 +1937,9 @@ class Translator {
 					fail(vformat("\"%s\" parameters are not supported yet.", cur().text));
 				}
 				const TypeInfo type = parse_type();
-				String param = typed_name(expect_ident(), type);
+				const String param_name = expect_ident();
+				declare_variable(param_name, type);
+				String param = typed_name(param_name, type);
 				if (accept("=")) {
 					param += " = " + parse_expression();
 				}
@@ -1594,6 +2037,7 @@ class Translator {
 
 		expect("{");
 		int count = 0;
+		pending_stack.push_back(Vector<CapturedLine>());
 		while (!is("}") && !at_end()) {
 			parse_member(member_indent, name, count);
 		}
@@ -1602,6 +2046,21 @@ class Translator {
 		accept(";");
 		if (!p_top_level && count == 0) {
 			emit(close_line, member_indent, "pass");
+		}
+		// Members that didn't fit on their own lines.
+		const Vector<CapturedLine> pending = pending_stack[pending_stack.size() - 1];
+		pending_stack.remove_at(pending_stack.size() - 1);
+		if (!pending.is_empty() && capture == nullptr) {
+			Vector<OutLine> &slot = out.write[CLAMP(close_line, 1, out.size()) - 1];
+			int last_line = -1;
+			for (const CapturedLine &captured : pending) {
+				if (captured.line != last_line) {
+					slot.push_back(captured.out_line);
+					last_line = captured.line;
+				} else {
+					emit_into(slot, captured.out_line);
+				}
+			}
 		}
 	}
 
@@ -1614,9 +2073,9 @@ class Translator {
 			return;
 		}
 		if (accept("namespace")) {
-			expect_ident();
+			(void)expect_ident();
 			while (accept(".")) {
-				expect_ident();
+				(void)expect_ident();
 			}
 			if (accept("{")) {
 				parse_namespace_body(true);

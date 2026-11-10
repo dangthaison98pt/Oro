@@ -828,6 +828,36 @@ void GDScriptSyntaxHighlighter::_update_cache() {
 	reserved_keywords[SNAME("set")] = function_color;
 	reserved_keywords[SNAME("get")] = function_color;
 
+	// Orostride: OroScript (.oro) uses C# keywords and comments.
+	const Ref<Script> edited_script = _get_edited_resource();
+	const bool oroscript = edited_script.is_valid() && edited_script->get_path().get_extension().to_lower() == "oro";
+	if (oroscript) {
+		const char *keywords[] = { "public", "private", "protected", "internal", "static", "readonly", "const", "override", "virtual",
+			"abstract", "sealed", "partial", "class", "struct", "enum", "interface", "namespace", "using", "new", "this", "base",
+			"typeof", "is", "as", "in", "out", "ref", "params", "value", "get", "set", "init", "null", "true", "false", "var" };
+		for (const char *keyword : keywords) {
+			reserved_keywords[StringName(keyword)] = keyword_color;
+		}
+		const char *control_flow[] = { "if", "else", "for", "foreach", "while", "do", "switch", "case", "default", "break", "continue",
+			"return", "try", "catch", "finally", "throw", "goto" };
+		for (const char *keyword : control_flow) {
+			reserved_keywords[StringName(keyword)] = control_flow_keyword_color;
+		}
+		const char *types[] = { "string", "double", "long", "short", "byte", "char", "object", "uint", "ulong", "decimal" };
+		for (const char *type : types) {
+			class_names[StringName(type)] = basetype_color;
+		}
+		// Not keywords in OroScript.
+		reserved_keywords.erase(SNAME("func"));
+		reserved_keywords.erase(SNAME("extends"));
+		reserved_keywords.erase(SNAME("pass"));
+		reserved_keywords.erase(SNAME("elif"));
+		reserved_keywords.erase(SNAME("match"));
+		reserved_keywords.erase(SNAME("not"));
+		reserved_keywords.erase(SNAME("and"));
+		reserved_keywords.erase(SNAME("or"));
+	}
+
 	/* Global functions. */
 	List<StringName> global_function_list;
 	GDScriptUtilityFunctions::get_function_list(&global_function_list);
@@ -841,7 +871,11 @@ void GDScriptSyntaxHighlighter::_update_cache() {
 
 	/* Comments. */
 	const Color comment_color = EDITOR_GET("text_editor/theme/highlighting/comment_color");
-	for (const String &comment : gdscript->get_comment_delimiters()) {
+	Vector<String> comment_delimiters = gdscript->get_comment_delimiters();
+	if (oroscript) {
+		comment_delimiters = { "//", "/* */" };
+	}
+	for (const String &comment : comment_delimiters) {
 		String beg = comment.get_slicec(' ', 0);
 		String end = comment.get_slice_count(" ") > 1 ? comment.get_slicec(' ', 1) : String();
 		add_color_region(ColorRegion::TYPE_COMMENT, beg, end, comment_color, end.is_empty());
@@ -849,7 +883,11 @@ void GDScriptSyntaxHighlighter::_update_cache() {
 
 	/* Doc comments */
 	const Color doc_comment_color = EDITOR_GET("text_editor/theme/highlighting/doc_comment_color");
-	for (const String &doc_comment : gdscript->get_doc_comment_delimiters()) {
+	Vector<String> doc_comment_delimiters = gdscript->get_doc_comment_delimiters();
+	if (oroscript) {
+		doc_comment_delimiters = { "///" };
+	}
+	for (const String &doc_comment : doc_comment_delimiters) {
 		String beg = doc_comment.get_slicec(' ', 0);
 		String end = doc_comment.get_slice_count(" ") > 1 ? doc_comment.get_slicec(' ', 1) : String();
 		add_color_region(ColorRegion::TYPE_COMMENT, beg, end, doc_comment_color, end.is_empty());

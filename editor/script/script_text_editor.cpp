@@ -348,7 +348,12 @@ void ScriptTextEditor::_set_theme_for_script() {
 
 	text_edit->clear_comment_delimiters();
 
-	for (const String &comment : script->get_language()->get_comment_delimiters()) {
+	// Orostride: OroScript (.oro) uses C# comments.
+	Vector<String> comment_delimiters = script->get_language()->get_comment_delimiters();
+	if (script->get_path().get_extension().to_lower() == "oro") {
+		comment_delimiters = { "//", "/* */" };
+	}
+	for (const String &comment : comment_delimiters) {
 		String beg = comment.get_slicec(' ', 0);
 		String end = comment.get_slice_count(" ") > 1 ? comment.get_slicec(' ', 1) : String();
 		text_edit->add_comment_delimiter(beg, end, end.is_empty());
@@ -1870,6 +1875,9 @@ void ScriptTextEditor::_edit_option_toggle_inline_comment() {
 			delimiter = script_delimiter;
 			break;
 		}
+	}
+	if (script->get_path().get_extension().to_lower() == "oro") {
+		delimiter = "//"; // OroScript uses C# comments.
 	}
 
 	code_editor->toggle_inline_comment(delimiter);
