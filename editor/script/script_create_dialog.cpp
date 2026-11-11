@@ -901,6 +901,9 @@ ScriptCreateDialog::ScriptCreateDialog() {
 	default_language = -1;
 	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 		String lang = ScriptServer::get_language(i)->get_name();
+		if (lang == "GDScript") {
+			lang = "OroScript"; // Orostride: .oro scripts (C#-like), .gd still works.
+		}
 		language_menu->add_item(lang);
 		if (lang == "GDScript") {
 			default_language = i;

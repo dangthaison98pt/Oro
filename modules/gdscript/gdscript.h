@@ -588,6 +588,8 @@ public:
 	virtual void init() override;
 	virtual String get_type() const override;
 	virtual String get_extension() const override;
+	// Orostride: like Unity, script files are named after their class (PlayerController.oro).
+	virtual ScriptNameCasing preferred_file_name_casing() const override { return SCRIPT_NAME_CASING_PASCAL_CASE; }
 	virtual void finish() override;
 
 	/* EDITOR FUNCTIONS */

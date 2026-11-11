@@ -278,6 +278,11 @@ void GDScriptParser::push_warning(const Node *p_source, GDScriptWarning::Code p_
 		return;
 	}
 
+	// Orostride: like C#, OroScript doesn't warn about unused parameters (e.g. Update's delta).
+	if (p_code == GDScriptWarning::UNUSED_PARAMETER && OroScriptTranslator::is_oroscript_path(script_path)) {
+		return;
+	}
+
 	PendingWarning pw;
 	pw.source = p_source;
 	pw.code = p_code;
