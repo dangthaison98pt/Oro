@@ -322,6 +322,27 @@ class Translator {
 		CALLABLE_UNKNOWN, // var f = x => ...;
 	};
 	HashMap<String, CallableKind> callables; // By variable name (all scopes).
+	HashSet<String> enum_types; // Enums declared in this file.
+	HashMap<String, String> enum_variables; // Variable name -> enum type (to print names, like C#).
+	HashSet<String> variant_types; // Interfaces and generic parameters: no type hint.
+	HashSet<String> generic_methods; // Generic methods declared in this file (their <T> is dropped).
+
+	// "Score: " + state -> prints the enum's name, like C#.
+	String display_string(const String &p_expression) const {
+		String name = p_expression;
+		if (name.begins_with("self.")) {
+			name = name.substr(5);
+		}
+		const String *enum_type = enum_variables.getptr(name);
+		if (enum_type) {
+			return *enum_type + ".find_key(" + p_expression + ")";
+		}
+		const int dot = p_expression.find_char('.');
+		if (dot > 0 && enum_types.has(p_expression.substr(0, dot)) && p_expression.substr(dot + 1).is_valid_ascii_identifier()) {
+			return "\"" + p_expression.substr(dot + 1) + "\""; // Weapon.Bow -> "Bow"
+		}
+		return "str(" + p_expression + ")";
+	}
 	CallableKind lambda_context = CALLABLE_NONE; // For the next lambda.
 
 	static CallableKind callable_kind_of(const TypeInfo &p_type) {
@@ -351,6 +372,16 @@ class Translator {
 	}
 
 	void declare_variable(const String &p_name, const TypeInfo &p_type) {
+		if (p_type.name == "Array" || p_type.name == "Dictionary" || p_type.name == "String" || p_type.name.begins_with("Packed")) {
+			collection_variables.insert(p_name);
+		} else {
+			collection_variables.erase(p_name);
+		}
+		if (enum_types.has(p_type.source_name)) {
+			enum_variables[p_name] = p_type.source_name;
+		} else {
+			enum_variables.erase(p_name);
+		}
 		const CallableKind kind = callable_kind_of(p_type);
 		if (kind != CALLABLE_NONE) {
 			callables[p_name] = kind;
@@ -376,6 +407,13 @@ class Translator {
 		return string_expressions.has(p_expression) || p_expression.begins_with("\"") || p_expression.begins_with("str(");
 	}
 	bool has_top_class = false;
+	String main_class; // The script's own class; other classes become inner classes.
+	HashSet<String> declared_names; // Fields, properties and variables declared in this file.
+	HashSet<String> collection_variables; // Variables known to be lists, arrays, dictionaries or strings.
+
+	bool is_collection(const String &p_expression) const {
+		return collection_variables.has(p_expression.trim_prefix("self.")) || is_string(p_expression);
+	}
 
 	// Errors: fail() records the first error of a statement and makes the parser see the end of
 	// the input, so every parsing function returns quickly. parse_statement() and parse_member()
@@ -629,7 +667,10 @@ class Translator {
 			r_type.is_var = true;
 			return true;
 		}
-		const String mapped = map_type_name(name);
+		String mapped = map_type_name(name);
+		if (variant_types.has(name)) {
+			mapped = "Variant"; // Interface or generic parameter.
+		}
 		r_type.name = mapped;
 		auto simple = [](const TypeInfo &p_type) { return !p_type.hint.is_empty() && !p_type.hint.contains_char('['); };
 		if ((name == "List" || name == "HashSet" || name == "Queue" || name == "Stack") && args.size() == 1) {
@@ -807,10 +848,10 @@ class Translator {
 			} else if (op == "+" && (is_string(left) || is_string(right))) {
 				// "Score: " + 10 -> ("Score: " + str(10))
 				if (!is_string(left)) {
-					left = "str(" + left + ")";
+					left = display_string(left);
 				}
 				if (!is_string(right)) {
-					right = "str(" + right + ")";
+					right = display_string(right);
 				}
 				left = mark_string("(" + left + " + " + right + ")");
 			} else {
@@ -983,7 +1024,7 @@ class Translator {
 					literal = String();
 				}
 				const String value = translate_sub_expression(expression, p_token);
-				String part = "str(" + value + ")";
+				String part = display_string(value);
 				if (!spec.is_empty()) {
 					const char32_t kind = spec[0];
 					const String digits = spec.substr(1);
@@ -1108,8 +1149,21 @@ class Translator {
 				if (type.name == "Dictionary") {
 					return parse_dictionary_initializer();
 				}
-				fail("Object initializers (new T { X = 1 }) are not supported yet.", type_token);
-				return String();
+				// new Enemy { Hp = 3, Speed = 2f } -> (func(): var o = Enemy.new(); o.Hp = 3; ...; return o).call()
+				const String constructed = is_constructible_builtin(type.name) ? type.name + args : type.name + ".new" + args;
+				pos++; // {
+				Vector<String> assignments;
+				while (!is("}") && !at_end()) {
+					const String member = expect_ident();
+					expect("=");
+					assignments.push_back("o." + member + " = " + parse_expression());
+					if (!accept(",")) {
+						break;
+					}
+				}
+				expect("}");
+				(void)type_token;
+				return "(func(): var o = " + constructed + "; " + (assignments.is_empty() ? String() : String("; ").join(assignments) + "; ") + "return o).call()";
 			}
 			if (type.name == "Array") {
 				return args == "()" ? String("[]") : "Array" + args;
@@ -1129,7 +1183,7 @@ class Translator {
 		pos++;
 		Vector<TypeInfo> type_args;
 		if (try_parse_generic_call_args(type_args)) {
-			return word + parse_arguments(type_args);
+			return word + parse_arguments(generic_methods.has(word) ? Vector<TypeInfo>() : type_args);
 		}
 		if (is("(") && callables.has(word)) {
 			return word + ".call" + parse_arguments(); // square(5) -> square.call(5)
@@ -1185,10 +1239,10 @@ class Translator {
 				const String member = expect_ident();
 				if (member == "ToString" && is("(") && is_at(1, ")")) {
 					pos += 2;
-					p_base = "str(" + p_base + ")";
+					p_base = display_string(p_base);
 					continue;
 				}
-				if ((member == "Count" || member == "Length") && !is("(")) {
+				if ((member == "Count" || member == "Length") && !is("(") && (is_collection(p_base) || !declared_names.has(member))) {
 					p_base = "len(" + p_base + ")"; // List.Count, array.Length, string.Length
 					continue;
 				}
@@ -1198,7 +1252,7 @@ class Translator {
 				}
 				Vector<TypeInfo> type_args;
 				if (try_parse_generic_call_args(type_args)) {
-					p_base += "." + member + parse_arguments(type_args);
+					p_base += "." + member + parse_arguments(generic_methods.has(member) ? Vector<TypeInfo>() : type_args);
 					continue;
 				}
 				p_base += "." + member;
@@ -1449,7 +1503,65 @@ class Translator {
 				parse_switch(p_indent, line);
 				return 1;
 			}
-			if (word == "try" || word == "throw" || word == "goto" || word == "lock" || word == "using" || word == "yield" || word == "unsafe" || word == "fixed") {
+			if (word == "try") {
+				// Scripts don't throw exceptions (errors are reported and the code goes on), so the
+				// try block runs as a plain block, catch blocks never run and finally runs after.
+				pos++;
+				emit(line, p_indent, "if true:", true);
+				parse_block(p_indent + 1);
+				while (is("catch")) {
+					pos++;
+					if (accept("(")) {
+						int depth = 1;
+						while (!at_end() && depth > 0) {
+							if (is("(")) {
+								depth++;
+							} else if (is(")")) {
+								depth--;
+							}
+							pos++;
+						}
+					}
+					if (is("when")) {
+						while (!is("{") && !at_end()) {
+							pos++;
+						}
+					}
+					skip_braces();
+				}
+				if (is("finally")) {
+					const int finally_line = cur().line;
+					pos++;
+					emit(finally_line, p_indent, "if true:", true);
+					parse_block(p_indent + 1);
+				}
+				return 1;
+			}
+			if (word == "throw") {
+				// throw new Exception("message") -> push_error("message")
+				pos++;
+				String message = "\"Exception\"";
+				if (is("new") && peek_token().type == Token::IDENT) {
+					pos++;
+					const String exception = tokens[pos++].text;
+					message = "\"" + exception + "\"";
+					if (accept("(")) {
+						if (!is(")")) {
+							message = parse_expression();
+							while (accept(",")) {
+								parse_expression();
+							}
+						}
+						expect(")");
+					}
+				} else if (!is(";")) {
+					message = parse_expression();
+				}
+				expect(";");
+				emit(line, p_indent, "push_error(" + (is_string(message) ? message : display_string(message)) + ")");
+				return 1;
+			}
+			if (word == "goto" || word == "goto" || word == "lock" || word == "using" || word == "yield" || word == "unsafe" || word == "fixed") {
 				fail(vformat("\"%s\" is not supported yet.", word));
 			}
 			if (try_parse_local_declaration(p_indent, line, false)) {
@@ -1697,7 +1809,11 @@ class Translator {
 			r_count++;
 			return;
 		}
-		if (is("interface") || is("delegate") || is("event") || is("operator") || is("implicit") || is("explicit")) {
+		if (is("interface")) {
+			skip_interface();
+			return;
+		}
+		if (is("delegate") || is("event") || is("operator") || is("implicit") || is("explicit")) {
 			fail(vformat("\"%s\" is not supported yet.", first.text));
 		}
 
@@ -1713,6 +1829,11 @@ class Translator {
 		const Token name_token = cur();
 		const String name = expect_ident();
 
+		if (is("<")) {
+			// Generic method: T Get<T>() -> its type parameters are Variants.
+			parse_generic_parameters();
+			generic_methods.insert(name);
+		}
 		if (is("(")) {
 			parse_method(p_indent, name_token.line, name, type, modifiers);
 			r_count++;
@@ -1801,7 +1922,7 @@ class Translator {
 	// Accessor function (_get_X / _set_X) at its own line, or at the end of the class if its
 	// line is taken.
 	void parse_accessor(int p_indent, int p_line, const String &p_kind, const String &p_property, const TypeInfo &p_type, bool p_static) {
-		const String function = "_" + p_kind + "_" + p_property;
+		const String function = "_oro_" + p_kind + "_" + p_property;
 		String header = p_static ? "static func " : "func ";
 		if (p_kind == "get") {
 			header += function + "()" + (p_type.hint.is_empty() ? String() : " -> " + p_type.hint) + ":";
@@ -1835,7 +1956,7 @@ class Translator {
 		const String var_text = (is_static ? "static var " : "var ") + typed_name(p_name, p_type);
 
 		if (is("=>")) {
-			emit(p_name_token.line, p_indent, var_text + ": get = _get_" + p_name);
+			emit(p_name_token.line, p_indent, var_text + ": get = _oro_get_" + p_name);
 			parse_accessor(p_indent, p_name_token.line, "get", p_name, p_type, is_static);
 			return;
 		}
@@ -1896,10 +2017,10 @@ class Translator {
 
 		Vector<String> accessors;
 		if (has_get) {
-			accessors.push_back("get = _get_" + p_name);
+			accessors.push_back("get = _oro_get_" + p_name);
 		}
 		if (has_set) {
-			accessors.push_back("set = _set_" + p_name);
+			accessors.push_back("set = _oro_set_" + p_name);
 		}
 		emit(p_name_token.line, p_indent, var_text + ": " + String(", ").join(accessors));
 
@@ -1950,6 +2071,7 @@ class Translator {
 			}
 		}
 		expect(")");
+		skip_constraints();
 		String header = p_modifiers.has("static") ? "static func " : "func ";
 		header += p_name + "(" + String(", ").join(params) + ")";
 		if (!p_return.hint.is_empty() && p_name != "_init") {
@@ -1995,7 +2117,58 @@ class Translator {
 		expect("}");
 		accept(";");
 		local_types.insert(name);
+		enum_types.insert(name);
 		emit(line, p_indent, "enum " + name + " { " + String(", ").join(values) + " }");
+	}
+
+	// <T, U> -> Variants.
+	void parse_generic_parameters() {
+		expect("<");
+		while (!is(">") && !at_end()) {
+			if (is("in") || is("out")) {
+				pos++;
+			}
+			variant_types.insert(expect_ident());
+			if (!accept(",")) {
+				break;
+			}
+		}
+		expect(">");
+	}
+
+	// where T : class, new() -> ignored.
+	void skip_constraints() {
+		while (accept("where")) {
+			while (!is("{") && !is(";") && !is("=>") && !is("where") && !at_end()) {
+				pos++;
+			}
+		}
+	}
+
+	// Interfaces have no runtime equivalent: they are skipped and their names become Variants.
+	void skip_interface() {
+		pos++; // interface
+		variant_types.insert(expect_ident());
+		if (is("<")) {
+			parse_generic_parameters();
+		}
+		while (!is("{") && !at_end()) {
+			pos++;
+		}
+		skip_braces();
+	}
+
+	void skip_braces() {
+		expect("{");
+		int depth = 1;
+		while (!at_end() && depth > 0) {
+			if (is("{")) {
+				depth++;
+			} else if (is("}")) {
+				depth--;
+			}
+			pos++;
+		}
 	}
 
 	void parse_class(int p_indent, bool p_top_level) {
@@ -2004,7 +2177,7 @@ class Translator {
 		pos++; // class / struct
 		const String name = expect_ident();
 		if (is("<")) {
-			fail("Generic classes are not supported yet.");
+			parse_generic_parameters(); // class Pool<T>: T is a Variant.
 		}
 		String base = "RefCounted";
 		if (accept(":")) {
@@ -2013,22 +2186,31 @@ class Translator {
 			while (accept(",")) {
 				parse_type();
 			}
-			if (!base_type.name.is_empty()) {
+			if (!base_type.name.is_empty() && base_type.name != "Variant") { // Not an interface.
 				base = base_type.name;
 			}
 		}
 		(void)is_struct;
-		while (is("where")) {
-			fail("Generic constraints are not supported yet.");
-		}
+		skip_constraints();
 		local_types.insert(name);
 
 		int member_indent = p_indent;
 		if (p_top_level) {
-			if (ClassDB::class_exists(name)) {
-				emit(line, p_indent, "extends " + base); // Can't hide an engine class.
+			const String header = ClassDB::class_exists(name) ? "extends " + base : "class_name " + name + " extends " + base; // Can't hide an engine class.
+			bool code_before = false;
+			for (int i = 0; i < line - 1 && i < out.size(); i++) {
+				if (!out[i].is_empty()) {
+					code_before = true;
+					break;
+				}
+			}
+			if (code_before) {
+				// Other classes come first in the file: "extends" must be the script's first line.
+				OutLine first;
+				first.text = header;
+				out.write[0].insert(0, first);
 			} else {
-				emit(line, p_indent, "class_name " + name + " extends " + base);
+				emit(line, p_indent, header);
 			}
 		} else {
 			emit(line, p_indent, "class " + name + " extends " + base + ":", true);
@@ -2093,12 +2275,18 @@ class Translator {
 		}
 		if (is("class") || is("struct")) {
 			// The first class is the script's class; the next ones become inner classes.
-			parse_class(0, !has_top_class);
-			has_top_class = true;
+			const String class_name = peek_token().text;
+			const bool is_main = !has_top_class && (main_class.is_empty() || class_name == main_class);
+			parse_class(0, is_main);
+			has_top_class = has_top_class || is_main;
 			return;
 		}
 		if (is("enum")) {
 			parse_enum(0);
+			return;
+		}
+		if (is("interface")) {
+			skip_interface();
 			return;
 		}
 		pos = decl_start;
@@ -2114,9 +2302,25 @@ class Translator {
 	}
 
 public:
-	Translator(const Vector<Token> &p_tokens, int p_line_count, Vector<OroScriptTranslator::Error> &r_errors) :
+	Translator(const Vector<Token> &p_tokens, int p_line_count, const String &p_file_class, Vector<OroScriptTranslator::Error> &r_errors) :
 			tokens(p_tokens), errors(r_errors) {
 		(void)out.resize(MAX(p_line_count, tokens[tokens.size() - 1].line) + 1);
+		// Names declared in this file (Type Name followed by { => = ; ,), so that a user's own
+		// Count or Length property isn't turned into len().
+		for (int i = 0; i + 2 < tokens.size(); i++) {
+			const Token &next = tokens[i + 2];
+			if (tokens[i].type == Token::IDENT && tokens[i + 1].type == Token::IDENT && next.type == Token::PUNCT &&
+					(next.text == "{" || next.text == "=>" || next.text == "=" || next.text == ";" || next.text == ",")) {
+				declared_names.insert(tokens[i + 1].text);
+			}
+		}
+		// The main class is the one named like the file, if there is one.
+		for (int i = 0; i + 1 < tokens.size(); i++) {
+			if (tokens[i].type == Token::IDENT && (tokens[i].text == "class" || tokens[i].text == "struct") && tokens[i + 1].text == p_file_class) {
+				main_class = p_file_class;
+				break;
+			}
+		}
 	}
 
 	String run() {
@@ -2139,13 +2343,13 @@ public:
 
 } // namespace
 
-String OroScriptTranslator::translate(const String &p_source, Vector<Error> &r_errors) {
+String OroScriptTranslator::translate(const String &p_source, const String &p_path, Vector<Error> &r_errors) {
 	Lexer lexer(p_source, r_errors);
 	const Vector<Token> tokens = lexer.tokenize();
 	if (!r_errors.is_empty()) {
 		return String();
 	}
 	const int line_count = p_source.count("\n") + 1;
-	Translator translator(tokens, line_count, r_errors);
+	Translator translator(tokens, line_count, p_path.get_file().get_basename(), r_errors);
 	return translator.run();
 }

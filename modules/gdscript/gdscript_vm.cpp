@@ -256,6 +256,8 @@ void (*type_init_function_table[])(Variant *) = {
 	static const void *switch_table_ops[] = { \
 		&&OPCODE_OPERATOR, \
 		&&OPCODE_OPERATOR_VALIDATED, \
+		&&OPCODE_OPERATOR_INT, \
+		&&OPCODE_OPERATOR_FLOAT, \
 		&&OPCODE_TYPE_TEST_BUILTIN, \
 		&&OPCODE_TYPE_TEST_ARRAY, \
 		&&OPCODE_TYPE_TEST_DICTIONARY, \
@@ -857,6 +859,165 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				GET_VARIANT_PTR(dst, 2);
 
 				operator_func(a, b, dst);
+
+				ip += 5;
+			}
+			DISPATCH_OPCODE;
+
+			OPCODE(OPCODE_OPERATOR_INT) {
+				// Orostride: int arithmetic and comparisons without a function call. Division and
+				// modulo check for zero here (the validated evaluators can't, so they used the slow path).
+				CHECK_SPACE(5);
+
+				GET_VARIANT_PTR(a, 0);
+				GET_VARIANT_PTR(b, 1);
+				GET_VARIANT_PTR(dst, 2);
+
+				const int64_t left = *VariantInternal::get_int(a);
+				const int64_t right = *VariantInternal::get_int(b);
+				const int op = _code_ptr[ip + 4];
+
+				if (op >= Variant::OP_EQUAL && op <= Variant::OP_GREATER_EQUAL) {
+					bool result = false;
+					switch (op) {
+						case Variant::OP_EQUAL:
+							result = left == right;
+							break;
+						case Variant::OP_NOT_EQUAL:
+							result = left != right;
+							break;
+						case Variant::OP_LESS:
+							result = left < right;
+							break;
+						case Variant::OP_LESS_EQUAL:
+							result = left <= right;
+							break;
+						case Variant::OP_GREATER:
+							result = left > right;
+							break;
+						default:
+							result = left >= right;
+							break;
+					}
+					VariantTypeChanger<bool>::change(dst);
+					*VariantInternal::get_bool(dst) = result;
+				} else {
+					// Note: OPCODE_BREAK can't be used inside the switch below (it's a `break` with MSVC).
+					int64_t result = 0;
+					bool division_by_zero = false;
+					bool bad_operator = false;
+					switch (op) {
+						case Variant::OP_ADD:
+							result = (int64_t)((uint64_t)left + (uint64_t)right);
+							break;
+						case Variant::OP_SUBTRACT:
+							result = (int64_t)((uint64_t)left - (uint64_t)right);
+							break;
+						case Variant::OP_MULTIPLY:
+							result = (int64_t)((uint64_t)left * (uint64_t)right);
+							break;
+						case Variant::OP_DIVIDE:
+						case Variant::OP_MODULE:
+							if (unlikely(right == 0)) {
+								division_by_zero = true;
+							} else if (unlikely(right == -1)) {
+								result = op == Variant::OP_DIVIDE ? (int64_t)(0 - (uint64_t)left) : 0; // Avoids INT64_MIN / -1 overflow.
+							} else {
+								result = op == Variant::OP_DIVIDE ? left / right : left % right;
+							}
+							break;
+						case Variant::OP_BIT_AND:
+							result = left & right;
+							break;
+						case Variant::OP_BIT_OR:
+							result = left | right;
+							break;
+						case Variant::OP_BIT_XOR:
+							result = left ^ right;
+							break;
+						default:
+							bad_operator = true;
+							break;
+					}
+					if (unlikely(division_by_zero)) {
+						err_text = vformat("Division by zero error in operator '%s'.", op == Variant::OP_DIVIDE ? "/" : "%");
+						OPCODE_BREAK;
+					}
+					if (unlikely(bad_operator)) {
+						err_text = "Bad int operator.";
+						OPCODE_BREAK;
+					}
+					VariantTypeChanger<int64_t>::change(dst);
+					*VariantInternal::get_int(dst) = result;
+				}
+
+				ip += 5;
+			}
+			DISPATCH_OPCODE;
+
+			OPCODE(OPCODE_OPERATOR_FLOAT) {
+				// Orostride: float arithmetic and comparisons without a function call.
+				CHECK_SPACE(5);
+
+				GET_VARIANT_PTR(a, 0);
+				GET_VARIANT_PTR(b, 1);
+				GET_VARIANT_PTR(dst, 2);
+
+				const double left = *VariantInternal::get_float(a);
+				const double right = *VariantInternal::get_float(b);
+				const int op = _code_ptr[ip + 4];
+
+				if (op >= Variant::OP_EQUAL && op <= Variant::OP_GREATER_EQUAL) {
+					bool result = false;
+					switch (op) {
+						case Variant::OP_EQUAL:
+							result = left == right;
+							break;
+						case Variant::OP_NOT_EQUAL:
+							result = left != right;
+							break;
+						case Variant::OP_LESS:
+							result = left < right;
+							break;
+						case Variant::OP_LESS_EQUAL:
+							result = left <= right;
+							break;
+						case Variant::OP_GREATER:
+							result = left > right;
+							break;
+						default:
+							result = left >= right;
+							break;
+					}
+					VariantTypeChanger<bool>::change(dst);
+					*VariantInternal::get_bool(dst) = result;
+				} else {
+					double result = 0.0;
+					bool bad_operator = false;
+					switch (op) {
+						case Variant::OP_ADD:
+							result = left + right;
+							break;
+						case Variant::OP_SUBTRACT:
+							result = left - right;
+							break;
+						case Variant::OP_MULTIPLY:
+							result = left * right;
+							break;
+						case Variant::OP_DIVIDE:
+							result = left / right;
+							break;
+						default:
+							bad_operator = true;
+							break;
+					}
+					if (unlikely(bad_operator)) {
+						err_text = "Bad float operator.";
+						OPCODE_BREAK;
+					}
+					VariantTypeChanger<double>::change(dst);
+					*VariantInternal::get_float(dst) = result;
+				}
 
 				ip += 5;
 			}

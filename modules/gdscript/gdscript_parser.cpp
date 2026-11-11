@@ -474,7 +474,7 @@ Error GDScriptParser::parse(const String &p_source_code, const String &p_script_
 	List<ParserError> oroscript_errors;
 	if (OroScriptTranslator::is_oroscript_path(p_script_path)) {
 		Vector<OroScriptTranslator::Error> translation_errors;
-		source = OroScriptTranslator::translate(source, translation_errors);
+		source = OroScriptTranslator::translate(source, p_script_path, translation_errors);
 		for (const OroScriptTranslator::Error &translation_error : translation_errors) {
 			ParserError error;
 			error.message = translation_error.message;

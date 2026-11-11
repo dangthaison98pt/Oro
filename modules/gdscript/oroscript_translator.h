@@ -34,5 +34,6 @@ public:
 		return p_path.get_extension().to_lower() == "oro";
 	}
 
-	static String translate(const String &p_source, Vector<Error> &r_errors);
+	// p_path picks the script's class: the one named like the file (like Unity), else the first one.
+	static String translate(const String &p_source, const String &p_path, Vector<Error> &r_errors);
 };

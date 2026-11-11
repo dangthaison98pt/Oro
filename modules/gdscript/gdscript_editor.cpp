@@ -135,6 +135,9 @@ static void get_function_names_recursively(const GDScriptParser::ClassNode *p_cl
 	for (int i = 0; i < p_class->members.size(); i++) {
 		if (p_class->members[i].type == GDScriptParser::ClassNode::Member::FUNCTION) {
 			const GDScriptParser::FunctionNode *function = p_class->members[i].function;
+			if (String(function->identifier->name).begins_with("_oro_")) {
+				continue; // OroScript property accessors.
+			}
 			r_funcs[function->start_line] = p_prefix.is_empty() ? String(function->identifier->name) : p_prefix + "." + String(function->identifier->name);
 		} else if (p_class->members[i].type == GDScriptParser::ClassNode::Member::CLASS) {
 			String new_prefix = p_class->members[i].m_class->identifier->name;

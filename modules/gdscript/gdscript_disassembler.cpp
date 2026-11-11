@@ -142,6 +142,19 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 
 				incr += 5;
 			} break;
+			case OPCODE_OPERATOR_INT:
+			case OPCODE_OPERATOR_FLOAT: {
+				text += _code_ptr[ip] == OPCODE_OPERATOR_INT ? "int operator " : "float operator ";
+				text += DADDR(3);
+				text += " = ";
+				text += DADDR(1);
+				text += " ";
+				text += Variant::get_operator_name(Variant::Operator(_code_ptr[ip + 4]));
+				text += " ";
+				text += DADDR(2);
+
+				incr += 5;
+			} break;
 			case OPCODE_TYPE_TEST_BUILTIN: {
 				text += "type test ";
 				text += DADDR(1);

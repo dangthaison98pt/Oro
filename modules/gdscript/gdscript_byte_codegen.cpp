@@ -587,6 +587,52 @@ void GDScriptByteCodeGenerator::write_unary_operator(const Address &p_target, Va
 void GDScriptByteCodeGenerator::write_binary_operator(const Address &p_target, Variant::Operator p_operator, const Address &p_left_operand, const Address &p_right_operand) {
 	bool valid = HAS_BUILTIN_TYPE(p_left_operand) && HAS_BUILTIN_TYPE(p_right_operand);
 
+	// Orostride: int and float operations get dedicated opcodes (no function call per operation,
+	// and int division/modulo no longer use the slow untyped path).
+	if (valid && p_left_operand.type.builtin_type == p_right_operand.type.builtin_type &&
+			(p_left_operand.type.builtin_type == Variant::INT || p_left_operand.type.builtin_type == Variant::FLOAT)) {
+		const bool is_int = p_left_operand.type.builtin_type == Variant::INT;
+		bool comparison = false;
+		bool supported = false;
+		switch (p_operator) {
+			case Variant::OP_EQUAL:
+			case Variant::OP_NOT_EQUAL:
+			case Variant::OP_LESS:
+			case Variant::OP_LESS_EQUAL:
+			case Variant::OP_GREATER:
+			case Variant::OP_GREATER_EQUAL:
+				comparison = true;
+				supported = true;
+				break;
+			case Variant::OP_ADD:
+			case Variant::OP_SUBTRACT:
+			case Variant::OP_MULTIPLY:
+			case Variant::OP_DIVIDE:
+				supported = true;
+				break;
+			case Variant::OP_MODULE:
+			case Variant::OP_BIT_AND:
+			case Variant::OP_BIT_OR:
+			case Variant::OP_BIT_XOR:
+				supported = is_int;
+				break;
+			default:
+				break;
+		}
+		if (supported) {
+			const Variant::Type result_type = comparison ? Variant::BOOL : p_left_operand.type.builtin_type;
+			if (p_target.mode == Address::TEMPORARY && temporaries[p_target.address].type != result_type) {
+				write_type_adjust(p_target, result_type);
+			}
+			append_opcode(is_int ? GDScriptFunction::OPCODE_OPERATOR_INT : GDScriptFunction::OPCODE_OPERATOR_FLOAT);
+			append(p_left_operand);
+			append(p_right_operand);
+			append(p_target);
+			append(int(p_operator));
+			return;
+		}
+	}
+
 	// Avoid validated evaluator for modulo and division when operands are int or integer vector, since there's no check for division by zero.
 	if (valid && (p_operator == Variant::OP_DIVIDE || p_operator == Variant::OP_MODULE)) {
 		switch (p_left_operand.type.builtin_type) {

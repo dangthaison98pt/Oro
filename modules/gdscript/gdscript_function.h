@@ -152,6 +152,8 @@ public:
 	enum Opcode {
 		OPCODE_OPERATOR,
 		OPCODE_OPERATOR_VALIDATED,
+		OPCODE_OPERATOR_INT, // Orostride: int (op) int, inline (no function call).
+		OPCODE_OPERATOR_FLOAT, // Orostride: float (op) float, inline.
 		OPCODE_TYPE_TEST_BUILTIN,
 		OPCODE_TYPE_TEST_ARRAY,
 		OPCODE_TYPE_TEST_DICTIONARY,
