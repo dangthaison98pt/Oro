@@ -59,6 +59,9 @@ class EditorBottomPanel : public DockTabContainer {
 	EditorToaster *editor_toaster = nullptr;
 	ProgressIndicator *progress_indicator = nullptr;
 	Button *pin_button = nullptr;
+	Control *version_button = nullptr;
+	Control *bottom_separator = nullptr;
+	void _update_empty();
 	Button *expand_button = nullptr;
 
 	int previous_tab = -1;
@@ -80,6 +83,7 @@ protected:
 	void _notification(int p_what);
 
 public:
+	void _queue_update_empty(); // Orostride: hide the bar's version and pin when it has no docks.
 	virtual void dock_closed(EditorDock *p_dock) override;
 	virtual void dock_focused(EditorDock *p_dock, bool p_was_visible) override;
 	virtual void update_visibility() override { show(); } // Never hide bottom panel.

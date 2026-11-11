@@ -1032,11 +1032,23 @@ void EditorNode::_notification(int p_what) {
 
 		case NOTIFICATION_READY: {
 			// Store the default order of bottom docks. It can only be determined dynamically.
+			// Orostride: docks that the Oro Layout puts elsewhere (next to Game or Console) stay there.
+			HashSet<String> placed_docks;
+			for (int slot = 0; slot < EditorDock::DOCK_SLOT_MAX; slot++) {
+				const String slot_key = "dock_" + itos(slot + 1);
+				if (slot != EditorDock::DOCK_SLOT_BOTTOM && default_layout->has_section_key("docks", slot_key)) {
+					for (const String &name : String(default_layout->get_value("docks", slot_key)).split(",")) {
+						placed_docks.insert(name);
+					}
+				}
+			}
 			PackedStringArray bottom_docks;
 			bottom_docks.reserve_exact(bottom_panel->get_tab_count());
 			for (int i = 0; i < bottom_panel->get_tab_count(); i++) {
 				EditorDock *dock = Object::cast_to<EditorDock>(bottom_panel->get_tab_control(i));
-				bottom_docks.append(dock->get_effective_layout_key());
+				if (!placed_docks.has(dock->get_effective_layout_key())) {
+					bottom_docks.append(dock->get_effective_layout_key());
+				}
 			}
 			default_layout->set_value("docks", "dock_9", String(",").join(bottom_docks));
 
@@ -9320,7 +9332,9 @@ EditorNode::EditorNode() {
 		const String inspector_key = InspectorDock::get_singleton()->get_effective_layout_key();
 		const String signals_key = SignalsDock::get_singleton()->get_effective_layout_key();
 		const String groups_key = GroupsDock::get_singleton()->get_effective_layout_key();
-		default_layout->set_value(docks_section, "dock_5", "Game"); // DOCK_SLOT_RIGHT_UL, added later by the game view plugin.
+		// DOCK_SLOT_RIGHT_UL: the Game dock (added later by the game view plugin), with the Animation and
+		// Audio (mixer) docks next to it, like Unity's tabs next to the Game view.
+		default_layout->set_value(docks_section, "dock_5", "Game,Animation,Audio");
 		default_layout->set_value(docks_section, "dock_5_selected_tab_idx", 0);
 		default_layout->set_value(docks_section, "dock_7", vformat("%s,%s,%s", inspector_key, signals_key, groups_key)); // DOCK_SLOT_RIGHT_UR
 		default_layout->set_value(docks_section, "dock_7_selected_tab_idx", 0);
@@ -9334,8 +9348,10 @@ EditorNode::EditorNode() {
 		const String filesystem_key = filesystem_dock->get_effective_layout_key();
 		const String import_key = ImportDock::get_singleton()->get_effective_layout_key();
 		const String history_key = history_dock->get_effective_layout_key();
-		// The output log ("Output") is created later with the bottom panel; refer to it by its layout key.
-		default_layout->set_value(docks_section, "dock_11", vformat("%s,Output,%s,%s", filesystem_key, import_key, history_key)); // DOCK_SLOT_BOTTOM_R
+		// The output log ("Output"), debugger, animation, audio and shader docks are created later
+		// (bottom panel and plugins); refer to them by their layout keys. Like Unity, they are tabs
+		// next to the Project and Console windows instead of a separate bottom panel.
+		default_layout->set_value(docks_section, "dock_11", vformat("%s,Output,Debugger,Shader Editor,%s,%s", filesystem_key, import_key, history_key)); // DOCK_SLOT_BOTTOM_R
 		default_layout->set_value(docks_section, "dock_11_selected_tab_idx", 0);
 	}
 	// Bottom row height and the width of its left (scene tree) part.

@@ -93,6 +93,7 @@ int EditorBottomPanel::get_bottom_panel_offset() {
 }
 
 void EditorBottomPanel::_repaint() {
+	_update_empty();
 	bool panel_collapsed = get_current_tab() == -1;
 
 	if (panel_collapsed && get_popup()) {
@@ -299,7 +300,8 @@ EditorBottomPanel::EditorBottomPanel() :
 	bottom_hbox->set_mouse_filter(MOUSE_FILTER_IGNORE);
 	get_internal_container()->add_child(bottom_hbox);
 
-	bottom_hbox->add_child(memnew(VSeparator));
+	bottom_separator = memnew(VSeparator);
+	bottom_hbox->add_child(bottom_separator);
 
 	editor_toaster = memnew(EditorToaster);
 	bottom_hbox->add_child(editor_toaster);
@@ -315,6 +317,7 @@ EditorBottomPanel::EditorBottomPanel() :
 	version_btn->set_self_modulate(Color(1, 1, 1, 0.65));
 	version_btn->set_v_size_flags(Control::SIZE_SHRINK_CENTER);
 	bottom_hbox->add_child(version_btn);
+	version_button = version_btn;
 
 	// Add a dummy control node for horizontal spacing.
 	Control *h_spacer = memnew(Control);
@@ -337,6 +340,34 @@ EditorBottomPanel::EditorBottomPanel() :
 	pin_button->connect(SceneStringName(toggled), callable_mp(this, &EditorBottomPanel::_pin_button_toggled));
 
 	callable_mp(this, &EditorBottomPanel::_repaint).call_deferred();
+
+	// Orostride: the bottom panel's docks are tabs next to the Console (Oro Layout); when it has
+	// none, only the notifications (toaster) stay.
+	connect(SNAME("child_order_changed"), callable_mp(this, &EditorBottomPanel::_update_empty));
+	// Docks moved to other slots leave through child_exiting_tree: check once they're gone.
+	connect(SNAME("child_exiting_tree"), callable_mp(this, &EditorBottomPanel::_queue_update_empty).unbind(1));
+	connect(SNAME("child_entered_tree"), callable_mp(this, &EditorBottomPanel::_queue_update_empty).unbind(1));
+	callable_mp(this, &EditorBottomPanel::_update_empty).call_deferred();
+}
+
+void EditorBottomPanel::_queue_update_empty() {
+	callable_mp(this, &EditorBottomPanel::_update_empty).call_deferred();
+}
+
+void EditorBottomPanel::_update_empty() {
+	if (!version_button) {
+		return;
+	}
+	bool empty = true;
+	for (int i = 0; i < get_tab_count(); i++) {
+		if (!is_tab_hidden(i)) {
+			empty = false;
+			break;
+		}
+	}
+	version_button->set_visible(!empty);
+	pin_button->set_visible(!empty);
+	bottom_separator->set_visible(!empty);
 }
 
 EditorBottomPanel::~EditorBottomPanel() {

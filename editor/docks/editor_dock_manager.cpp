@@ -35,6 +35,7 @@
 #include "editor/docks/editor_dock.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
+#include "editor/gui/editor_bottom_panel.h"
 #include "editor/gui/window_wrapper.h"
 #include "editor/settings/editor_settings.h"
 #include "editor/themes/editor_scale.h"
@@ -360,6 +361,9 @@ void EditorDockManager::_move_dock(EditorDock *p_dock, Control *p_target, int p_
 			parent->set_block_signals(true);
 			parent->remove_child(p_dock);
 			parent->set_block_signals(false);
+			if (EditorBottomPanel *bottom_panel = Object::cast_to<EditorBottomPanel>(parent)) {
+				bottom_panel->_queue_update_empty(); // Signals were blocked.
+			}
 			if (parent_tabs) {
 				parent_tabs->update_visibility();
 			}
