@@ -605,12 +605,14 @@ ProjectListItemControl::ProjectListItemControl() {
 		path_hb->add_child(last_edited_info);
 	}
 
-	if (DisplayServer::get_singleton()->is_touchscreen_available()) {
+	// Orostride: a "..." menu button on every row (like Unity Hub), not only on touchscreens.
+	{
 		touch_menu_button = memnew(Button);
 		touch_menu_button->set_theme_type_variation(SceneStringName(FlatButton));
 		touch_menu_button->set_v_size_flags(SIZE_SHRINK_CENTER);
 		add_child(touch_menu_button);
 		touch_menu_button->set_mouse_filter(MOUSE_FILTER_PASS);
+		touch_menu_button->set_tooltip_text(TTRC("Project options"));
 		touch_menu_button->connect(SceneStringName(pressed), callable_mp(this, &ProjectListItemControl::_request_menu));
 	}
 
@@ -1371,6 +1373,13 @@ void ProjectList::_on_explore_pressed(const String &p_path) {
 void ProjectList::_open_menu(const Vector2 &p_at, Control *p_hb) {
 	int clicked_index = p_hb->get_index();
 	const Item &clicked_project = _projects[clicked_index];
+
+	// The menu acts on the selection: select the clicked project if it isn't selected.
+	if (!_selected_project_paths.has(clicked_project.path)) {
+		_last_clicked = clicked_project.path;
+		select_project(clicked_index, true);
+		emit_signal(SNAME(SIGNAL_SELECTION_CHANGED));
+	}
 
 	if (!project_context_menu) {
 		project_context_menu = memnew(PopupMenu);

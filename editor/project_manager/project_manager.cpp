@@ -60,6 +60,8 @@
 #include "scene/gui/check_box.h"
 #include "scene/gui/flow_container.h"
 #include "scene/gui/line_edit.h"
+#include "scene/gui/menu_button.h"
+#include "scene/resources/style_box_flat.h"
 #include "scene/gui/margin_container.h"
 #include "scene/gui/menu_bar.h"
 #include "scene/gui/option_button.h"
@@ -119,7 +121,7 @@ void ProjectManager::_notification(int p_what) {
 			SceneTree::get_singleton()->get_root()->set_title(GODOT_VERSION_NAME + String(" - ") + TTR("Project Manager", "Application"));
 
 			const String line1 = TTR("You don't have any projects yet.");
-			const String line2 = TTR("Get started by creating a new one,\nimporting one that exists, or by downloading a project template from the Asset Store!");
+			const String line2 = TTR("Get started by creating a new one\nor importing one that exists.");
 			empty_list_message->set_text(vformat("[center][b]%s[/b] %s[/center]", line1, line2));
 
 			_titlebar_resized();
@@ -280,7 +282,6 @@ void ProjectManager::_update_theme(bool p_skip_creation) {
 			erase_btn->set_button_icon(get_editor_theme_icon("Remove"));
 			erase_missing_btn->set_button_icon(get_editor_theme_icon("Clear"));
 			create_tag_btn->set_button_icon(get_editor_theme_icon("Add"));
-			donate_btn->set_button_icon(get_editor_theme_icon("Heart"));
 
 			tag_error->add_theme_color_override(SceneStringName(font_color), get_theme_color("error_color", EditorStringName(Editor)));
 			tag_edit_error->add_theme_color_override(SceneStringName(font_color), get_theme_color("error_color", EditorStringName(Editor)));
@@ -404,6 +405,20 @@ void ProjectManager::_open_asset_library_confirmed() {
 	_select_main_view(MAIN_VIEW_ASSETLIB);
 }
 
+void ProjectManager::_hub_add_option(int p_option) {
+	switch (p_option) {
+		case 0:
+			_import_project();
+			break;
+		case 1:
+			_scan_projects();
+			break;
+		case 2:
+			_erase_missing_projects();
+			break;
+	}
+}
+
 void ProjectManager::_project_list_menu_option(int p_option) {
 	switch (p_option) {
 		case ProjectList::MENU_EDIT:
@@ -492,16 +507,8 @@ void ProjectManager::_update_list_placeholder() {
 		return;
 	}
 
-	empty_list_open_assetlib->set_visible(asset_library);
-
-	const int network_mode = EDITOR_GET("network/connection/network_mode");
-	if (network_mode == EditorSettings::NETWORK_OFFLINE) {
-		empty_list_open_assetlib->set_text(TTRC("Go Online and Open Asset Store"));
-		empty_list_online_warning->set_visible(true);
-	} else {
-		empty_list_open_assetlib->set_text(TTRC("Open Asset Store"));
-		empty_list_online_warning->set_visible(false);
-	}
+	empty_list_open_assetlib->set_visible(false);
+	empty_list_online_warning->set_visible(false);
 
 	empty_list_placeholder->show();
 }
@@ -1234,6 +1241,28 @@ void ProjectManager::shortcut_input(const Ref<InputEvent> &p_ev) {
 			return;
 		}
 
+		// Orostride: the action buttons are hidden (Unity Hub layout), so handle their shortcuts here.
+		struct HiddenShortcut {
+			const char *name;
+			Button *button;
+		};
+		const HiddenShortcut hidden_shortcuts[] = {
+			{ "project_manager/edit_project", open_btn },
+			{ "project_manager/run_project", run_btn },
+			{ "project_manager/rename_project", rename_btn },
+			{ "project_manager/project_tags", manage_tags_btn },
+			{ "project_manager/remove_project", erase_btn },
+			{ "project_manager/import_project", import_btn },
+			{ "project_manager/scan_projects", scan_btn },
+		};
+		for (const HiddenShortcut &shortcut : hidden_shortcuts) {
+			if (shortcut.button && !shortcut.button->is_disabled() && ED_IS_SHORTCUT(shortcut.name, p_ev)) {
+				shortcut.button->emit_signal(SceneStringName(pressed));
+				accept_event();
+				return;
+			}
+		}
+
 		bool keycode_handled = true;
 
 		switch (k->get_keycode()) {
@@ -1429,8 +1458,35 @@ ProjectManager::ProjectManager() {
 	add_child(root_container);
 	root_container->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 
+	// Orostride: Unity Hub-like layout. Sidebar on the left (logo, Projects, Settings, version),
+	// content on the right (title with "Add" and "New project", search, project list).
+	HBoxContainer *hub_hbox = memnew(HBoxContainer);
+	hub_hbox->add_theme_constant_override("separation", 0);
+	root_container->add_child(hub_hbox);
+
+	PanelContainer *hub_sidebar = memnew(PanelContainer);
+	hub_sidebar->set_custom_minimum_size(Size2(210, 0) * EDSCALE);
+	{
+		Ref<StyleBoxFlat> sidebar_style;
+		sidebar_style.instantiate();
+		sidebar_style->set_bg_color(theme->get_color(SNAME("dark_color_2"), EditorStringName(Editor)));
+		sidebar_style->set_corner_radius_all(10 * EDSCALE);
+		sidebar_style->set_content_margin_all(12 * EDSCALE);
+		hub_sidebar->add_theme_style_override(SceneStringName(panel), sidebar_style);
+	}
+	hub_hbox->add_child(hub_sidebar);
+
+	VBoxContainer *hub_sidebar_vb = memnew(VBoxContainer);
+	hub_sidebar_vb->add_theme_constant_override("separation", 6 * EDSCALE);
+	hub_sidebar->add_child(hub_sidebar_vb);
+
+	Control *hub_gap = memnew(Control);
+	hub_gap->set_custom_minimum_size(Size2(12, 0) * EDSCALE);
+	hub_hbox->add_child(hub_gap);
+
 	main_vbox = memnew(VBoxContainer);
-	root_container->add_child(main_vbox);
+	main_vbox->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	hub_hbox->add_child(main_vbox);
 
 	// Title bar.
 	bool can_expand = bool(EDITOR_GET("interface/editor/appearance/expand_to_title")) && DisplayServer::get_singleton()->has_feature(DisplayServerEnums::FEATURE_EXTEND_TO_TITLE);
@@ -1454,9 +1510,28 @@ ProjectManager::ProjectManager() {
 
 		title_bar_logo = memnew(Button);
 		title_bar_logo->set_flat(true);
+		title_bar_logo->set_text("Orostride");
+		title_bar_logo->set_text_alignment(HORIZONTAL_ALIGNMENT_LEFT);
 		title_bar_logo->set_tooltip_text(TTR("About Orostride"));
-		left_hbox->add_child(title_bar_logo);
+		title_bar_logo->add_theme_font_size_override(SceneStringName(font_size), 18 * EDSCALE);
+		hub_sidebar_vb->add_child(title_bar_logo);
 		title_bar_logo->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_show_about));
+
+		hub_sidebar_vb->add_child(memnew(HSeparator));
+
+		Button *projects_nav = memnew(Button);
+		projects_nav->set_text(TTRC("Projects"));
+		projects_nav->set_text_alignment(HORIZONTAL_ALIGNMENT_LEFT);
+		projects_nav->set_toggle_mode(true);
+		projects_nav->set_pressed(true);
+		projects_nav->set_focus_mode(Control::FOCUS_NONE);
+		projects_nav->set_theme_type_variation("FlatMenuButton");
+		projects_nav->set_button_icon(theme->get_icon(SNAME("ProjectList"), EditorStringName(EditorIcons)));
+		hub_sidebar_vb->add_child(projects_nav);
+
+		Control *sidebar_spacer = memnew(Control);
+		sidebar_spacer->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		hub_sidebar_vb->add_child(sidebar_spacer);
 
 		bool global_menu = !bool(EDITOR_GET("interface/editor/appearance/use_embedded_menu")) && NativeMenu::get_singleton()->has_feature(NativeMenu::FEATURE_GLOBAL_MENU);
 		if (global_menu) {
@@ -1510,7 +1585,8 @@ ProjectManager::ProjectManager() {
 		quick_settings_button = memnew(Button);
 		quick_settings_button->set_flat(true);
 		quick_settings_button->set_text(TTRC("Settings"));
-		right_hbox->add_child(quick_settings_button);
+		quick_settings_button->set_text_alignment(HORIZONTAL_ALIGNMENT_LEFT);
+		hub_sidebar_vb->add_child(quick_settings_button);
 		quick_settings_button->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_show_quick_settings));
 
 		if (can_expand) {
@@ -1521,8 +1597,15 @@ ProjectManager::ProjectManager() {
 		}
 	}
 
+	// The title bar only matters when the window extends into it; the view toggles are in the sidebar.
+	main_view_toggles->hide();
+	if (!can_expand) {
+		title_bar->hide();
+	}
+
 	main_view_container = memnew(PanelContainer);
 	main_view_container->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+	main_view_container->add_theme_style_override(SceneStringName(panel), memnew(StyleBoxEmpty));
 	main_vbox->add_child(main_view_container);
 
 	// Project list view.
@@ -1531,38 +1614,98 @@ ProjectManager::ProjectManager() {
 		local_projects_vb->set_name("LocalProjectsTab");
 		_add_main_view(MAIN_VIEW_PROJECTS, TTRC("Projects"), Ref<Texture2D>(), local_projects_vb);
 
-		// Project list's top bar.
+		// Header: "Projects", Add menu and New project (like Unity Hub).
+		local_projects_vb->add_theme_constant_override("separation", 10 * EDSCALE);
 		{
-			HBoxContainer *hb = memnew(HBoxContainer);
-			hb->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-			local_projects_vb->add_child(hb);
+			HBoxContainer *header = memnew(HBoxContainer);
+			header->add_theme_constant_override("separation", 8 * EDSCALE);
+			local_projects_vb->add_child(header);
 
-			create_btn = memnew(Button);
-			create_btn->set_text(TTRC("Create"));
-			create_btn->set_shortcut(ED_SHORTCUT("project_manager/new_project", TTRC("New Project"), KeyModifierMask::CMD_OR_CTRL | Key::N));
-			create_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_new_project));
-			hb->add_child(create_btn);
-
-			import_btn = memnew(Button);
-			import_btn->set_text(TTRC("Import"));
-			import_btn->set_shortcut(ED_SHORTCUT("project_manager/import_project", TTRC("Import Project"), KeyModifierMask::CMD_OR_CTRL | Key::I));
-			import_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_import_project));
-			hb->add_child(import_btn);
-
-			scan_btn = memnew(Button);
-			scan_btn->set_text(TTRC("Scan"));
-			scan_btn->set_shortcut(ED_SHORTCUT("project_manager/scan_projects", TTRC("Scan Projects"), KeyModifierMask::CMD_OR_CTRL | Key::S));
-			scan_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_scan_projects));
-			hb->add_child(scan_btn);
+			Label *title = memnew(Label);
+			title->set_text(TTRC("Projects"));
+			title->add_theme_font_override(SceneStringName(font), theme->get_font(SNAME("bold"), EditorStringName(EditorFonts)));
+			title->add_theme_font_size_override(SceneStringName(font_size), 22 * EDSCALE);
+			header->add_child(title);
 
 			loading_label = memnew(Label(TTRC("Loading, please wait...")));
 			loading_label->set_accessibility_live(AccessibilityServerEnums::AccessibilityLiveMode::LIVE_ASSERTIVE);
 			loading_label->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 			loading_label->hide();
-			hb->add_child(loading_label);
+			header->add_child(loading_label);
+
+			Control *header_spacer = memnew(Control);
+			header_spacer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+			header->add_child(header_spacer);
+
+			// Import and Scan stay as (hidden) buttons for their shortcuts; the Add menu runs them.
+			HBoxContainer *hidden_buttons = memnew(HBoxContainer);
+			hidden_buttons->hide();
+			header->add_child(hidden_buttons);
+
+			import_btn = memnew(Button);
+			import_btn->set_text(TTRC("Import"));
+			import_btn->set_shortcut(ED_SHORTCUT("project_manager/import_project", TTRC("Import Project"), KeyModifierMask::CMD_OR_CTRL | Key::I));
+			import_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_import_project));
+			hidden_buttons->add_child(import_btn);
+
+			scan_btn = memnew(Button);
+			scan_btn->set_text(TTRC("Scan"));
+			scan_btn->set_shortcut(ED_SHORTCUT("project_manager/scan_projects", TTRC("Scan Projects"), KeyModifierMask::CMD_OR_CTRL | Key::S));
+			scan_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_scan_projects));
+			hidden_buttons->add_child(scan_btn);
+
+			MenuButton *add_btn = memnew(MenuButton);
+			add_btn->set_text(TTRC("Add"));
+			add_btn->set_flat(false);
+			add_btn->set_theme_type_variation("FlatMenuButton");
+			add_btn->set_button_icon(theme->get_icon(SNAME("GuiDropdown"), EditorStringName(EditorIcons)));
+			add_btn->set_icon_alignment(HORIZONTAL_ALIGNMENT_RIGHT);
+			add_btn->set_tooltip_text(TTRC("Add existing projects to the list."));
+			PopupMenu *add_popup = add_btn->get_popup();
+			add_popup->add_icon_item(theme->get_icon(SNAME("Load"), EditorStringName(EditorIcons)), TTRC("Add Project from Disk..."), 0);
+			add_popup->add_icon_item(theme->get_icon(SNAME("Search"), EditorStringName(EditorIcons)), TTRC("Scan Folder for Projects..."), 1);
+			add_popup->add_separator();
+			add_popup->add_icon_item(theme->get_icon(SNAME("Clear"), EditorStringName(EditorIcons)), TTRC("Remove Missing Projects"), 2);
+			add_popup->connect(SceneStringName(id_pressed), callable_mp(this, &ProjectManager::_hub_add_option));
+			header->add_child(add_btn);
+
+			create_btn = memnew(Button);
+			create_btn->set_text(TTRC("New Project"));
+			create_btn->set_shortcut(ED_SHORTCUT("project_manager/new_project", TTRC("New Project"), KeyModifierMask::CMD_OR_CTRL | Key::N));
+			create_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_new_project));
+			{
+				// Accent-colored primary button.
+				const Color accent = theme->get_color(SNAME("accent_color"), EditorStringName(Editor));
+				Ref<StyleBoxFlat> normal;
+				normal.instantiate();
+				normal->set_bg_color(accent);
+				normal->set_corner_radius_all(6 * EDSCALE);
+				normal->set_content_margin_individual(14 * EDSCALE, 6 * EDSCALE, 14 * EDSCALE, 6 * EDSCALE);
+				Ref<StyleBoxFlat> hover = normal->duplicate();
+				hover->set_bg_color(accent.lightened(0.12));
+				Ref<StyleBoxFlat> pressed = normal->duplicate();
+				pressed->set_bg_color(accent.darkened(0.12));
+				create_btn->add_theme_style_override(CoreStringName(normal), normal);
+				create_btn->add_theme_style_override(SNAME("hover"), hover);
+				create_btn->add_theme_style_override(SNAME("pressed"), pressed);
+				create_btn->add_theme_style_override(SNAME("focus"), memnew(StyleBoxEmpty));
+				create_btn->add_theme_color_override(SceneStringName(font_color), Color(1, 1, 1));
+				create_btn->add_theme_color_override(SNAME("font_hover_color"), Color(1, 1, 1));
+				create_btn->add_theme_color_override(SNAME("font_pressed_color"), Color(1, 1, 1));
+				create_btn->add_theme_color_override(SNAME("icon_normal_color"), Color(1, 1, 1));
+				create_btn->add_theme_color_override(SNAME("icon_hover_color"), Color(1, 1, 1));
+			}
+			header->add_child(create_btn);
+		}
+
+		// Search and sort.
+		{
+			HBoxContainer *hb = memnew(HBoxContainer);
+			hb->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+			local_projects_vb->add_child(hb);
 
 			search_box = memnew(LineEdit);
-			search_box->set_placeholder(TTRC("Filter Projects"));
+			search_box->set_placeholder(TTRC("Search Projects"));
 			search_box->set_accessibility_name(TTRC("Filter Projects"));
 			search_box->set_tooltip_text(TTRC("This field filters projects by name and last path component.\nTo filter projects by name and full path, the query must contain at least one `/` character."));
 			search_box->set_clear_button_enabled(true);
@@ -1588,6 +1731,33 @@ ProjectManager::ProjectManager() {
 			filter_option->add_item(TTRC("Name"));
 			filter_option->add_item(TTRC("Path"));
 			filter_option->add_item(TTRC("Tags"));
+		}
+
+		// Column headers.
+		{
+			HBoxContainer *columns = memnew(HBoxContainer);
+			columns->set_modulate(Color(1, 1, 1, 0.55));
+			local_projects_vb->add_child(columns);
+			Control *indent = memnew(Control);
+			indent->set_custom_minimum_size(Size2(28 + 64 + 8, 0) * EDSCALE); // Favorite star and icon.
+			columns->add_child(indent);
+			Label *name_column = memnew(Label);
+			name_column->set_text(TTRC("NAME"));
+			name_column->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+			columns->add_child(name_column);
+			Label *version_column = memnew(Label);
+			version_column->set_text(TTRC("VERSION"));
+			columns->add_child(version_column);
+			Control *between = memnew(Control);
+			between->set_custom_minimum_size(Size2(40, 0) * EDSCALE);
+			columns->add_child(between);
+			Label *modified_column = memnew(Label);
+			modified_column->set_text(TTRC("MODIFIED"));
+			modified_column->set_custom_minimum_size(Size2(150, 0) * EDSCALE);
+			columns->add_child(modified_column);
+			Control *menu_space = memnew(Control);
+			menu_space->set_custom_minimum_size(Size2(40, 0) * EDSCALE);
+			columns->add_child(menu_space);
 		}
 
 		// Project list and its sidebar.
@@ -1662,6 +1832,7 @@ ProjectManager::ProjectManager() {
 			VBoxContainer *project_list_sidebar = memnew(VBoxContainer);
 			project_list_sidebar->set_custom_minimum_size(Size2(120, 120));
 			project_list_hbox->add_child(project_list_sidebar);
+			project_list_sidebar->hide(); // Orostride: actions are in each project's "..." menu.
 
 			project_list_sidebar->add_child(memnew(HSeparator));
 
@@ -1733,26 +1904,10 @@ ProjectManager::ProjectManager() {
 			erase_missing_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_erase_missing_projects));
 			sidebar_buttons_containter->add_child(erase_missing_btn);
 
-			donate_btn = memnew(Button);
-			donate_btn->set_text(TTRC("Donate"));
-			donate_btn->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_open_donate_page));
-			project_list_sidebar->add_child(donate_btn);
 		}
 	}
 
-	// Asset store view.
-	if (AssetLibraryEditorPlugin::is_available()) {
-		asset_library = memnew(EditorAssetLibrary(true));
-		asset_library->set_name("AssetLibraryTab");
-		_add_main_view(MAIN_VIEW_ASSETLIB, TTRC("Asset Store"), Ref<Texture2D>(), asset_library);
-		asset_library->connect("install_asset", callable_mp(this, &ProjectManager::_install_project));
-	} else {
-		VBoxContainer *asset_library_filler = memnew(VBoxContainer);
-		asset_library_filler->set_name("AssetLibraryTab");
-		Button *asset_library_toggle = _add_main_view(MAIN_VIEW_ASSETLIB, TTRC("Asset Store"), Ref<Texture2D>(), asset_library_filler);
-		asset_library_toggle->set_disabled(true);
-		asset_library_toggle->set_tooltip_text(TTRC("Asset Store not available (due to using Web editor, or because SSL support disabled)."));
-	}
+	// Orostride: no Asset Store (it was Godot's online store).
 
 	// Footer bar.
 	{
@@ -1767,10 +1922,11 @@ ProjectManager::ProjectManager() {
 		update_label->connect("offline_clicked", callable_mp(this, &ProjectManager::_show_quick_settings));
 #endif
 
-		EditorVersionButton *version_btn = memnew(EditorVersionButton(EditorVersionButton::FORMAT_WITH_BUILD));
+		EditorVersionButton *version_btn = memnew(EditorVersionButton(EditorVersionButton::FORMAT_BASIC));
 		// Fade the version label to be less prominent, but still readable.
 		version_btn->set_self_modulate(Color(1, 1, 1, 0.6));
-		footer_bar->add_child(version_btn);
+		hub_sidebar_vb->add_child(version_btn);
+		footer_bar->hide();
 	}
 
 	// Dialogs.

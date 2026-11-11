@@ -84,10 +84,11 @@ void ExportTemplateManager::_request_mirrors() {
 		mirrors_list->set_tooltip_text(String());
 	}
 
-	if (mirrors_list->get_tooltip_text().is_empty()) {
-		const String mirrors_metadata_url = vformat("https://godotengine.org/mirrorlist/%s.json", GODOT_VERSION_FULL_CONFIG);
-		mirrors_requester->request(mirrors_metadata_url);
-	}
+	// Orostride: export templates aren't downloaded from Godot's mirrors (they wouldn't match this
+	// engine). They are built with the engine (ExportTemplates folder) or installed from a file.
+	mirrors_list->clear();
+	_set_empty_mirror_list();
+	mirrors_list->set_tooltip_text(TTRC("Orostride export templates are built with the engine. Use \"Install from File\"."));
 }
 
 void ExportTemplateManager::_mirrors_request_completed(int p_result, int p_response_code, const PackedStringArray &p_headers, const PackedByteArray &p_body) {

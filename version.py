@@ -1,9 +1,9 @@
 short_name = "orostride"
 name = "Orostride Engine"
-major = 4
-minor = 7
-patch = 2
+major = 2026
+minor = 1
+patch = 0
 status = "stable"
 module_config = ""
-website = "https://godotengine.org"
+website = ""
 docs = "4.7"

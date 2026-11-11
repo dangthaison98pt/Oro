@@ -4056,6 +4056,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 	site_search->set_accessibility_name(TTRC("Site Search"));
 	site_search->connect(SceneStringName(pressed), callable_mp(this, &ScriptEditor::_menu_option).bind(SEARCH_WEBSITE));
 	menu_hb->add_child(site_search);
+	site_search->hide(); // Orostride: it opened Godot's online documentation.
 
 	help_search = memnew(Button);
 	help_search->set_theme_type_variation(SceneStringName(FlatButton));

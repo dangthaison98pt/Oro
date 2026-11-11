@@ -119,6 +119,7 @@ class ProjectManager : public Control {
 	void _show_about();
 	void _open_asset_library_confirmed();
 	void _project_list_menu_option(int p_option);
+	void _hub_add_option(int p_option); // Orostride: the "Add" menu.
 
 	AcceptDialog *error_dialog = nullptr;
 

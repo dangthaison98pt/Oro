@@ -456,7 +456,6 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("asset_store/use_threads", true);
 
 	Dictionary default_urls;
-	default_urls["godotengine.org (Official)"] = "https://store.godotengine.org/api/v1";
 	_initial_set("asset_store/available_urls", default_urls, true);
 
 	/* Interface */
@@ -1366,6 +1365,10 @@ String EditorSettings::get_existing_settings_path() {
 			minor--;
 		}
 	} while (minor >= 0 && !FileAccess::exists(config_dir.path_join(filename)));
+	// Orostride: keep the settings of the versions before 2026.1 (which were numbered 4.7).
+	if (!FileAccess::exists(config_dir.path_join(filename)) && FileAccess::exists(config_dir.path_join("editor_settings-4.7.tres"))) {
+		filename = "editor_settings-4.7.tres";
+	}
 	return config_dir.path_join(filename);
 }
 
