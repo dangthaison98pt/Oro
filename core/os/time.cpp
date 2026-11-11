@@ -395,7 +395,7 @@ uint64_t Time::get_ticks_usec() const {
 double Time::unity_get_delta_time() const {
 	// Like Unity, deltaTime is the fixed step inside physics frames (FixedUpdate).
 	if (Engine::get_singleton()->is_in_physics_frame()) {
-		return unity_get_fixed_delta_time() * Engine::get_singleton()->get_effective_time_scale();
+		return unity_get_fixed_delta_time();
 	}
 	return Engine::get_singleton()->get_process_step() * Engine::get_singleton()->get_effective_time_scale();
 }
@@ -405,7 +405,8 @@ double Time::unity_get_unscaled_delta_time() const {
 }
 
 double Time::unity_get_fixed_delta_time() const {
-	return 1.0 / Engine::get_singleton()->get_physics_ticks_per_second();
+	// The physics step, scaled by Time.timeScale (physics runs every step with a scaled delta).
+	return Engine::get_singleton()->get_effective_time_scale() / Engine::get_singleton()->get_physics_ticks_per_second();
 }
 
 double Time::unity_get_time() const {

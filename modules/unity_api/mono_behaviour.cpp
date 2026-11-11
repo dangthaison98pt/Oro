@@ -191,7 +191,10 @@ void MonoBehaviour::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_PHYSICS_PROCESS: {
-			if (enabled) {
+			// Like Unity, FixedUpdate doesn't run while the game is paused with Time.timeScale = 0.
+			// (In slow motion it runs every physics step with a scaled Time.fixedDeltaTime, which
+			// moves things at the same overall speed as Unity's fewer, full steps.)
+			if (enabled && Engine::get_singleton()->get_effective_time_scale() > 0.0) {
 				GDVIRTUAL_CALL(FixedUpdate);
 			}
 		} break;

@@ -406,7 +406,8 @@ void ComponentListEditor::_build() {
 			_add_component(child, root);
 		}
 	}
-	_add_advanced(game_object, root);
+	// Orostride: no Advanced section. Node settings (process mode, priorities, physics interpolation,
+	// auto translate, skew...) are set from code, like in Unity.
 
 	// Keep the list in sync when components are added, removed or reordered.
 	game_object->connect(SNAME("child_order_changed"), callable_mp(this, &ComponentListEditor::_queue_refresh));
@@ -516,7 +517,7 @@ void ComponentListEditor::_add_advanced(Node *p_game_object, EditorInspector *p_
 	EditorInspector *inspector = _create_sub_inspector(p_root);
 	// Render settings are in the renderer's own section or in the Sorting Group section.
 	inspector->set_shown_property_classes({ SNAME("Node"), SNAME("Node2D") });
-	inspector->set_hidden_property_names({ SNAME("position"), SNAME("rotation"), SNAME("scale") }); // In the Transform section.
+	inspector->set_hidden_property_names({ SNAME("position"), SNAME("rotation"), SNAME("scale"), SNAME("skew") }); // Transform section; skew is code-only (Unity has none).
 	inspector->set_hide_metadata(false);
 	body->add_child(inspector);
 	inspector->edit(p_game_object);
