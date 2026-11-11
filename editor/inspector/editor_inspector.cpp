@@ -4784,6 +4784,9 @@ void EditorInspector::update_tree() {
 			}
 
 			StringName propname = property_prefix + p.name;
+			if (property_path_resolver.is_valid()) {
+				propname = String(property_path_resolver.call(String(propname)));
+			}
 			for (const KeyValue<String, String> &E : doc_property_class_remaps) {
 				if (property_prefix.begins_with(E.key)) {
 					propname = property_prefix.trim_prefix(E.key) + p.name;

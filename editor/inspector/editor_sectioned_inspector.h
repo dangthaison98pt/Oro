@@ -30,6 +30,8 @@
 
 #pragma once
 
+#include "core/templates/pair.h"
+
 #include "scene/gui/split_container.h"
 
 class CheckButton;
@@ -56,6 +58,11 @@ class SectionedInspector : public HSplitContainer {
 
 	bool restrict_to_basic = false;
 
+	// Orostride: Unity-style layout (display only: the settings keep their real paths).
+	Vector<Pair<String, String>> path_aliases; // Real prefix -> shown prefix, most specific first.
+	Vector<String> hidden_paths; // Real prefixes that aren't shown (3D, XR).
+	Vector<String> section_order; // Shown top-level sections, in order.
+
 	static void _bind_methods();
 	void _section_selected();
 
@@ -77,6 +84,11 @@ public:
 	String get_current_section() const;
 
 	void update_category_list();
+
+	void set_unity_layout(const Vector<Pair<String, String>> &p_aliases, const Vector<String> &p_hidden, const Vector<String> &p_order);
+	String to_virtual_path(const String &p_path) const;
+	String to_real_path(const String &p_path) const;
+	bool is_hidden_path(const String &p_path) const;
 
 	SectionedInspector();
 	~SectionedInspector();

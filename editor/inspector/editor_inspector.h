@@ -793,6 +793,7 @@ private:
 	Vector<StringName> hidden_property_classes;
 	Vector<StringName> shown_property_classes;
 	Vector<StringName> hidden_property_names;
+	Callable property_path_resolver; // Orostride: shown path -> real path (for documentation).
 	Vector<StringName> effective_hidden_classes;
 	bool unity_object_layout = false;
 	bool unity_object_layout_active = false; // The edited object is a game object.
@@ -938,6 +939,7 @@ public:
 	// Shows only the properties declared by these classes.
 	void set_shown_property_classes(const Vector<StringName> &p_classes) { shown_property_classes = p_classes; }
 	void set_hidden_property_names(const Vector<StringName> &p_names) { hidden_property_names = p_names; }
+	void set_property_path_resolver(const Callable &p_resolver) { property_path_resolver = p_resolver; }
 	bool is_unity_object_layout() const { return unity_object_layout; }
 	// Game objects: node, canvas item and transform settings are moved out of the main list
 	// (the transform and an "Advanced" section are added by ComponentInspectorPlugin).

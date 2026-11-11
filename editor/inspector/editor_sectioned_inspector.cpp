@@ -58,21 +58,23 @@ class SectionedInspectorFilter : public Object {
 	GDCLASS(SectionedInspectorFilter, Object);
 
 	Object *edited = nullptr;
+	const SectionedInspector *owner = nullptr;
 	String section;
 	bool allow_sub = false;
+
+	// Shown path -> real setting path.
+	String _real(const String &p_name) const {
+		const String full = section.is_empty() ? p_name : section + "/" + p_name;
+		return owner ? owner->to_real_path(full) : full;
+	}
 
 	bool _set(const StringName &p_name, const Variant &p_value) {
 		if (!edited) {
 			return false;
 		}
 
-		String name = p_name;
-		if (!section.is_empty()) {
-			name = section + "/" + name;
-		}
-
 		bool valid;
-		edited->set(name, p_value, &valid);
+		edited->set(_real(p_name), p_value, &valid);
 		return valid;
 	}
 
@@ -81,14 +83,9 @@ class SectionedInspectorFilter : public Object {
 			return false;
 		}
 
-		String name = p_name;
-		if (!section.is_empty()) {
-			name = section + "/" + name;
-		}
-
 		bool valid = false;
 
-		r_ret = edited->get(name, &valid);
+		r_ret = edited->get(_real(p_name), &valid);
 		return valid;
 	}
 	void _get_property_list(List<PropertyInfo> *p_list) const {
@@ -109,6 +106,13 @@ class SectionedInspectorFilter : public Object {
 				pi.name = "global/" + pi.name;
 			}
 
+			if (owner) {
+				if (owner->is_hidden_path(pi.name)) {
+					continue;
+				}
+				pi.name = owner->to_virtual_path(pi.name);
+			}
+
 			if (pi.name.begins_with(section + "/")) {
 				pi.name = pi.name.replace_first(section + "/", "");
 				if (!allow_sub && pi.name.contains_char('/')) {
@@ -120,15 +124,19 @@ class SectionedInspectorFilter : public Object {
 	}
 
 	bool _property_can_revert(const StringName &p_name) const {
-		return edited->property_can_revert(section + "/" + p_name);
+		return edited->property_can_revert(_real(p_name));
 	}
 
 	bool _property_get_revert(const StringName &p_name, Variant &r_property) const {
-		r_property = edited->property_get_revert(section + "/" + p_name);
+		r_property = edited->property_get_revert(_real(p_name));
 		return true;
 	}
 
 public:
+	void set_owner(const SectionedInspector *p_owner) {
+		owner = p_owner;
+	}
+
 	void set_section(const String &p_section, bool p_allow_sub) {
 		section = p_section;
 		allow_sub = p_allow_sub;
@@ -158,9 +166,53 @@ void SectionedInspector::_section_selected() {
 	emit_signal(SNAME("category_changed"), selected_category);
 }
 
+static bool _path_has_prefix(const String &p_path, const String &p_prefix) {
+	return p_path == p_prefix || p_path.begins_with(p_prefix + "/");
+}
+
+void SectionedInspector::set_unity_layout(const Vector<Pair<String, String>> &p_aliases, const Vector<String> &p_hidden, const Vector<String> &p_order) {
+	path_aliases = p_aliases;
+	hidden_paths = p_hidden;
+	section_order = p_order;
+	filter->set_owner(this);
+	inspector->set_property_path_resolver(callable_mp(this, &SectionedInspector::to_real_path));
+}
+
+String SectionedInspector::to_virtual_path(const String &p_path) const {
+	for (const Pair<String, String> &alias : path_aliases) {
+		if (_path_has_prefix(p_path, alias.first)) {
+			return alias.second + p_path.substr(alias.first.length());
+		}
+	}
+	return p_path;
+}
+
+String SectionedInspector::to_real_path(const String &p_path) const {
+	int best = -1;
+	for (int i = 0; i < path_aliases.size(); i++) {
+		if (_path_has_prefix(p_path, path_aliases[i].second) && (best == -1 || path_aliases[i].second.length() > path_aliases[best].second.length())) {
+			best = i;
+		}
+	}
+	if (best == -1) {
+		return p_path;
+	}
+	return path_aliases[best].first + p_path.substr(path_aliases[best].second.length());
+}
+
+bool SectionedInspector::is_hidden_path(const String &p_path) const {
+	for (const String &hidden : hidden_paths) {
+		if (_path_has_prefix(p_path, hidden)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void SectionedInspector::set_current_section(const String &p_section) {
-	if (section_map.has(p_section)) {
-		TreeItem *item = section_map[p_section];
+	const String shown_section = to_virtual_path(p_section);
+	if (section_map.has(shown_section)) {
+		TreeItem *item = section_map[shown_section];
 		item->select(0);
 		sections->scroll_to_item(item);
 	}
@@ -177,10 +229,11 @@ String SectionedInspector::get_current_section() const {
 String SectionedInspector::get_full_item_path(const String &p_item) {
 	String base = get_current_section();
 
+	// The real setting path (sections may be shown under other names).
 	if (!base.is_empty()) {
-		return base + "/" + p_item;
+		return to_real_path(base + "/" + p_item);
 	} else {
-		return p_item;
+		return to_real_path(p_item);
 	}
 }
 
@@ -244,6 +297,32 @@ void SectionedInspector::update_category_list() {
 
 	const EditorPropertyNameProcessor::Style name_style = EditorPropertyNameProcessor::get_settings_style();
 	const EditorPropertyNameProcessor::Style tooltip_style = EditorPropertyNameProcessor::get_tooltip_style(name_style);
+
+	// Orostride: hide 3D settings, show the others under Unity-style sections, in Unity's order.
+	if (!path_aliases.is_empty() || !hidden_paths.is_empty()) {
+		Vector<PropertyInfo> shown;
+		for (PropertyInfo pi : pinfo) {
+			const String real = pi.name.contains_char('/') ? pi.name : "global/" + pi.name;
+			if (is_hidden_path(real)) {
+				continue;
+			}
+			pi.name = to_virtual_path(real); // Searching uses the shown names.
+			shown.push_back(pi);
+		}
+		pinfo.clear();
+		for (const String &section : section_order) {
+			for (const PropertyInfo &pi : shown) {
+				if (pi.name.get_slicec('/', 0) == section) {
+					pinfo.push_back(pi);
+				}
+			}
+		}
+		for (const PropertyInfo &pi : shown) {
+			if (!section_order.has(pi.name.get_slicec('/', 0))) {
+				pinfo.push_back(pi);
+			}
+		}
+	}
 
 	for (PropertyInfo &pi : pinfo) {
 		if (pi.usage & PROPERTY_USAGE_CATEGORY) {

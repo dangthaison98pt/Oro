@@ -159,7 +159,7 @@ void ProjectSettingsEditor::_setting_selected(const String &p_path) {
 		return;
 	}
 
-	property_box->set_text(general_settings_inspector->get_current_section() + "/" + p_path);
+	property_box->set_text(general_settings_inspector->get_full_item_path(p_path));
 
 	_update_property_box(); // set_text doesn't trigger text_changed
 }
@@ -765,6 +765,53 @@ ProjectSettingsEditor::ProjectSettingsEditor(EditorData *p_data) {
 	custom_properties->add_child(del_button);
 
 	general_settings_inspector = memnew(SectionedInspector);
+	{
+		// Orostride: Unity-style sections (the settings keep their paths in project.orostride),
+		// and no 3D / XR settings (the engine is 2D-only).
+		Vector<Pair<String, String>> aliases;
+		const char *alias_table[][2] = {
+			{ "application/run/max_fps", "quality/frame_rate/max_fps" },
+			{ "display/window/vsync", "quality/vsync" },
+			{ "rendering/anti_aliasing", "quality/anti_aliasing" },
+			{ "physics/common", "time/fixed_timestep" },
+			{ "application/config", "player/project" },
+			{ "application/run", "player/startup" },
+			{ "application/boot_splash", "player/splash_screen" },
+			{ "application", "player/application" },
+			{ "display/window", "player/window" },
+			{ "display/mouse_cursor", "player/cursor" },
+			{ "display", "player/display" },
+			{ "rendering", "graphics" },
+			{ "physics/2d", "physics_2d/settings" },
+			{ "physics", "physics_2d" },
+			{ "layer_names", "tags_and_layers" },
+			{ "navigation/2d", "navigation_2d/settings" },
+			{ "navigation", "navigation_2d" },
+			{ "input_devices", "input" },
+			{ "internationalization", "localization" },
+			{ "gui", "user_interface" },
+		};
+		for (const auto &alias : alias_table) {
+			aliases.push_back(Pair<String, String>(alias[0], alias[1]));
+		}
+		const Vector<String> hidden = {
+			"layer_names/3d_render", "layer_names/3d_physics", "layer_names/3d_navigation",
+			"physics/3d", "navigation/3d", "xr", "collada",
+			"rendering/lights_and_shadows", "rendering/global_illumination", "rendering/occlusion_culling",
+			"rendering/mesh_lod", "rendering/reflections", "rendering/shading", "rendering/scaling_3d",
+			"rendering/camera", "rendering/lightmapping", "rendering/vrs",
+			"rendering/anti_aliasing/quality/msaa_3d", "rendering/anti_aliasing/quality/use_taa",
+			"rendering/anti_aliasing/quality/screen_space_aa", "rendering/anti_aliasing/screen_space_roughness_limiter",
+			"rendering/textures/decals", "rendering/textures/light_projectors",
+			"rendering/environment/ssao", "rendering/environment/ssil", "rendering/environment/subsurface_scattering",
+			"rendering/environment/volumetric_fog", "rendering/environment/screen_space_reflection",
+			"rendering/environment/defaults/default_environment",
+			"rendering/limits/spatial_indexer", "rendering/limits/cluster_builder", "rendering/limits/forward_renderer",
+		};
+		const Vector<String> order = { "player", "graphics", "quality", "time", "physics_2d", "audio", "input",
+			"tags_and_layers", "navigation_2d", "user_interface", "localization" };
+		general_settings_inspector->set_unity_layout(aliases, hidden, order);
+	}
 	general_settings_inspector->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	general_settings_inspector->register_search_box(search_box);
 	general_settings_inspector->register_advanced_toggle(advanced);
