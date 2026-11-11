@@ -33,6 +33,15 @@ bool MonoBehaviour::_runs_callbacks() const {
 	return instance && instance->get_script().is_valid() && instance->get_script()->is_tool();
 }
 
+void MonoBehaviour::_call_start() {
+	start_queued = false;
+	if (started || !enabled || !is_inside_tree() || !_runs_callbacks()) {
+		return;
+	}
+	started = true;
+	GDVIRTUAL_CALL(Start);
+}
+
 Node *MonoBehaviour::unity_get_game_object() {
 	// The game object is the node this component is attached to.
 	Node *parent = get_parent();
@@ -177,20 +186,25 @@ void MonoBehaviour::_notification(int p_what) {
 				return;
 			}
 			_connect_physics_signals();
-			if (enabled && !started) {
-				started = true;
-				GDVIRTUAL_CALL(Start);
+			// Like Unity, Start runs once the scene is set up and before the first Update, so it
+			// can add and remove objects freely (the parent is still busy during NOTIFICATION_READY).
+			if (enabled && !started && !start_queued) {
+				start_queued = true;
+				callable_mp(this, &MonoBehaviour::_call_start).call_deferred();
 			}
 		} break;
 
 		case NOTIFICATION_PROCESS: {
-			if (enabled) {
+			if (enabled && started) {
 				GDVIRTUAL_CALL(Update);
 				GDVIRTUAL_CALL(LateUpdate);
 			}
 		} break;
 
 		case NOTIFICATION_PHYSICS_PROCESS: {
+			if (!started) {
+				break; // Start hasn't run yet.
+			}
 			// Like Unity, FixedUpdate doesn't run while the game is paused with Time.timeScale = 0.
 			// (In slow motion it runs every physics step with a scaled Time.fixedDeltaTime, which
 			// moves things at the same overall speed as Unity's fewer, full steps.)

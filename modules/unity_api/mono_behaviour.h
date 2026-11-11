@@ -24,6 +24,8 @@ class MonoBehaviour : public Node {
 	bool enabled = true;
 	bool awoken = false;
 	bool started = false;
+	bool start_queued = false;
+	void _call_start();
 	Ref<Transform> transform;
 
 	bool _runs_callbacks() const;

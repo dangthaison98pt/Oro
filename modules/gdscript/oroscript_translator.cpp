@@ -1370,6 +1370,9 @@ class Translator {
 	}
 
 	// Returns the number of statements emitted.
+	// True when the last parsed statement was a `while (true)` loop (so the code after it can't run).
+	bool last_statement_infinite_loop = false;
+
 	int parse_statement(int p_indent) {
 		const int start = pos;
 		const int count = parse_statement_inner(p_indent);
@@ -1383,6 +1386,7 @@ class Translator {
 	int parse_statement_inner(int p_indent) {
 		const Token first = cur();
 		const int line = first.line;
+		last_statement_infinite_loop = false;
 
 		if (is(";")) {
 			pos++;
@@ -1429,6 +1433,7 @@ class Translator {
 				break_targets.push_back(false);
 				parse_body(p_indent + 1, line);
 				break_targets.remove_at(break_targets.size() - 1);
+				last_statement_infinite_loop = condition == "true";
 				return 1;
 			}
 			if (word == "do") {
@@ -2081,7 +2086,14 @@ class Translator {
 		emit(p_line, p_indent, header, true);
 
 		if (is("{")) {
+			last_statement_infinite_loop = false;
 			parse_block(p_indent + 1);
+			// C# knows that the code after `while (true)` can't run; the analyzer doesn't, so add an
+			// unreachable return to satisfy it.
+			if (last_statement_infinite_loop && !p_return.is_void && !p_return.hint.is_empty() && p_name != "_init") {
+				const bool builtin = p_return.hint == "int" || p_return.hint == "float" || p_return.hint == "bool" || p_return.hint == "String" || is_constructible_builtin(p_return.name);
+				emit(tokens[pos - 1].line, p_indent + 1, "return " + (builtin ? p_return.hint.get_slicec('[', 0) + "()" : String("null")));
+			}
 		} else if (accept("=>")) {
 			const int line = cur().line;
 			const String value = parse_simple_statement();
