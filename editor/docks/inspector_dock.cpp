@@ -37,6 +37,7 @@
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/docks/filesystem_dock.h"
 #include "editor/docks/scene_tree_dock.h"
+#include "editor/docks/unity_menus.h"
 #include "editor/editor_main_screen.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
@@ -874,13 +875,23 @@ InspectorDock::InspectorDock(EditorData &p_editor_data) {
 	add_component_button->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
 	add_component_button->set_custom_minimum_size(Size2(200, 0) * EDSCALE);
 	add_component_button->hide();
-	add_component_button->connect(SceneStringName(pressed), callable_mp(SceneTreeDock::get_singleton(), &SceneTreeDock::open_add_component_dialog));
+	add_component_button->connect(SceneStringName(pressed), callable_mp(this, &InspectorDock::_open_add_component));
+	add_component_dialog = memnew(AddComponentDialog);
+	add_child(add_component_dialog);
 	main_vb->add_child(add_component_button);
 	inspector->connect("resource_selected", callable_mp(this, &InspectorDock::_resource_selected));
 
 	FileSystemDock::get_singleton()->connect("files_moved", callable_mp(this, &InspectorDock::_files_moved));
 
 	set_process_shortcut_input(true);
+}
+
+void InspectorDock::_open_add_component() {
+	// Orostride: Unity-style Add Component window for the edited game object.
+	Node *node = Object::cast_to<Node>(inspector->get_edited_object());
+	if (node) {
+		add_component_dialog->popup_for(node);
+	}
 }
 
 InspectorDock::~InspectorDock() {

@@ -176,6 +176,9 @@ class SceneTreeDock : public EditorDock {
 
 	PopupMenu *menu = nullptr;
 	PopupMenu *menu_subresources = nullptr;
+	class GameObjectCreateMenu *create_menu = nullptr; // Orostride: Unity-style Create menu.
+	class GameObjectCreateMenu *context_create_menu = nullptr;
+	void _show_create_menu();
 	PopupMenu *menu_properties = nullptr;
 	ConfirmationDialog *clear_inherit_confirm = nullptr;
 

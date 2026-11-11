@@ -42,6 +42,7 @@
 #include "editor/docks/filesystem_dock.h"
 #include "editor/docks/groups_dock.h"
 #include "editor/docks/inspector_dock.h"
+#include "editor/docks/unity_menus.h"
 #include "editor/docks/signals_dock.h"
 #include "editor/editor_main_screen.h"
 #include "editor/editor_node.h"
@@ -3923,9 +3924,28 @@ void SceneTreeDock::_add_children_to_popup(Object *p_obj, int p_depth) {
 	}
 }
 
+void SceneTreeDock::_show_create_menu() {
+	create_menu->set_as_child(false);
+	create_menu->reset_size();
+	create_menu->set_position(button_add->get_screen_position() + Vector2(0, button_add->get_size().y));
+	create_menu->popup();
+}
+
 void SceneTreeDock::_tree_rmb(const Vector2 &p_menu_pos) {
 	ERR_FAIL_COND(!EditorNode::get_singleton()->get_edited_scene());
 	menu->clear(false);
+
+	// Orostride: Unity-style "Create" submenu (children of the clicked object).
+	if (profile_allow_editing) {
+		if (!context_create_menu) {
+			context_create_menu = memnew(GameObjectCreateMenu);
+			menu->add_child(context_create_menu);
+		}
+		context_create_menu->set_as_child(!editor_selection->get_top_selected_node_list().is_empty());
+		menu->add_submenu_node_item(TTR("Create"), context_create_menu);
+		menu->set_item_icon(-1, get_editor_theme_icon(SNAME("Add")));
+		menu->add_separator();
+	}
 
 	const List<Node *> selection = editor_selection->get_top_selected_node_list(); // Only the top-level selected nodes.
 	List<Node *> full_selection = editor_selection->get_full_selected_node_list(); // All selected nodes.
@@ -5129,8 +5149,11 @@ SceneTreeDock::SceneTreeDock(Node *p_scene_root, EditorSelection *p_editor_selec
 
 	button_add = memnew(Button);
 	button_add->set_theme_type_variation("FlatMenuButton");
-	button_add->connect(SceneStringName(pressed), callable_mp(this, &SceneTreeDock::_tool_selected).bind(TOOL_NEW, false));
-	button_add->set_tooltip_text(TTRC("Add/Create a New Node."));
+	// Orostride: a Unity-style Create menu (Create Empty, 2D Object, Camera, UI...).
+	create_menu = memnew(GameObjectCreateMenu);
+	add_child(create_menu);
+	button_add->connect(SceneStringName(pressed), callable_mp(this, &SceneTreeDock::_show_create_menu));
+	button_add->set_tooltip_text(TTRC("Create a game object."));
 	button_add->set_shortcut(ED_GET_SHORTCUT("scene_tree/add_child_node"));
 	filter_hbc->add_child(button_add);
 

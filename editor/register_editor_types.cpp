@@ -42,6 +42,7 @@
 #include "editor/debugger/debug_adapter/debug_adapter_server.h"
 #include "editor/debugger/editor_debugger_plugin.h"
 #include "editor/docks/filesystem_dock.h"
+#include "editor/docks/unity_menus.h"
 #include "editor/editor_interface.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
@@ -159,6 +160,9 @@ void register_editor_types() {
 	EditorStringNames::create();
 
 	GDREGISTER_CLASS(EditorPaths);
+	// Orostride: registered so that their signals can be connected.
+	GDREGISTER_INTERNAL_CLASS(GameObjectCreateMenu);
+	GDREGISTER_INTERNAL_CLASS(AddComponentDialog);
 	GDREGISTER_VIRTUAL_CLASS(EditorPlugin);
 	GDREGISTER_CLASS(EditorTranslationParserPlugin);
 	GDREGISTER_CLASS(EditorImportPlugin);
