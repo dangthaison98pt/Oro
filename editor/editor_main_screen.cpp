@@ -158,7 +158,7 @@ void EditorMainScreen::select_by_name(const String &p_name) {
 	ERR_FAIL_COND(p_name.is_empty());
 
 	for (int i = 0; i < buttons.size(); i++) {
-		if (buttons[i]->get_text() == p_name) {
+		if (String(buttons[i]->get_name()) == p_name) {
 			select(i);
 			return;
 		}
@@ -243,11 +243,11 @@ bool EditorMainScreen::can_auto_switch_screens() const {
 	// Only allow auto-switching if the selected button is to the left of the Script button.
 	for (int i = 0; i < button_hb->get_child_count(); i++) {
 		Button *button = Object::cast_to<Button>(button_hb->get_child(i));
-		if (button->get_text() == "Script") {
+		if (String(button->get_name()) == "Script") {
 			// Selected button is at or after the Script button.
 			return false;
 		}
-		if (button->get_text() == selected_plugin->get_plugin_name()) {
+		if (String(button->get_name()) == selected_plugin->get_plugin_name()) {
 			// Selected button is before the Script button.
 			return true;
 		}
@@ -264,7 +264,8 @@ void EditorMainScreen::add_main_plugin(EditorPlugin *p_editor) {
 	tb->set_toggle_mode(true);
 	tb->set_theme_type_variation("MainScreenButton");
 	tb->set_name(p_editor->get_plugin_name());
-	tb->set_text(p_editor->get_plugin_name());
+	// Orostride: the engine is 2D-only, so the 2D workspace is simply the "Scene" view (like Unity).
+	tb->set_text(p_editor->get_plugin_name() == "2D" ? String("Scene") : p_editor->get_plugin_name());
 
 	Ref<Shortcut> shortcut = EditorSettings::get_singleton()->get_shortcut("editor/editor_" + p_editor->get_plugin_name().to_lower());
 	if (shortcut.is_valid()) {
