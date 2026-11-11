@@ -120,6 +120,11 @@ class ComponentInspectorPlugin : public EditorInspectorPlugin {
 	GDCLASS(ComponentInspectorPlugin, EditorInspectorPlugin);
 
 public:
+	// Nodes that draw something (sprites, UI, tile maps, particles...). Like Unity's renderers, they
+	// show their render settings (visibility, ordering, texture, material) in their own section;
+	// other nodes (bodies, colliders, cameras, empty Node2Ds) keep them in "Advanced".
+	static bool is_renderer(const Object *p_object);
+
 	virtual bool can_handle(Object *p_object) override;
 	virtual void parse_begin(Object *p_object) override;
 	virtual void parse_end(Object *p_object) override;

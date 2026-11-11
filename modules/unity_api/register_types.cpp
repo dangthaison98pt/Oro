@@ -9,6 +9,7 @@
 #include "register_types.h"
 
 #include "mono_behaviour.h"
+#include "sorting_group.h"
 #include "unity_singletons.h"
 #include "unity_transform.h"
 
@@ -27,6 +28,7 @@ void initialize_unity_api_module(ModuleInitializationLevel p_level) {
 	}
 
 	GDREGISTER_CLASS(MonoBehaviour);
+	GDREGISTER_CLASS(SortingGroup);
 	GDREGISTER_ABSTRACT_CLASS(Transform);
 	GDREGISTER_ABSTRACT_CLASS(Debug);
 	GDREGISTER_ABSTRACT_CLASS(Mathf);

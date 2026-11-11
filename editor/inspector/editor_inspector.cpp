@@ -4285,7 +4285,9 @@ void EditorInspector::update_tree() {
 		if (unity_object_layout && node && !node->unity_is_component() && EditorNode::get_singleton()->get_edited_scene() &&
 				(node == EditorNode::get_singleton()->get_edited_scene() || EditorNode::get_singleton()->get_edited_scene()->is_ancestor_of(node))) {
 			effective_hidden_classes.push_back(SNAME("Node"));
-			effective_hidden_classes.push_back(SNAME("CanvasItem"));
+			if (!ComponentInspectorPlugin::is_renderer(object)) {
+				effective_hidden_classes.push_back(SNAME("CanvasItem")); // Renderers keep theirs, like Unity.
+			}
 			effective_hidden_classes.push_back(SNAME("Node2D"));
 			unity_object_layout_active = true; // The script and metadata go in the "Advanced" section.
 		}
@@ -4405,7 +4407,14 @@ void EditorInspector::update_tree() {
 
 			// Create an EditorInspectorCategory and add it to the inspector.
 			EditorInspectorCategory *category = memnew(EditorInspectorCategory);
-			category->set_property_info(p);
+			if (unity_object_layout_active && p.name == "CanvasItem") {
+				// Orostride: a renderer's render settings, like Unity's Renderer section.
+				PropertyInfo rendering = p;
+				rendering.name = "Rendering";
+				category->set_property_info(rendering);
+			} else {
+				category->set_property_info(p);
+			}
 			main_vbox->add_child(category);
 			category_vbox = nullptr; // Reset.
 

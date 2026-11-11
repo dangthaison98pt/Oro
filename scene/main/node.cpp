@@ -3819,6 +3819,7 @@ bool Node::unity_is_component() const {
 	// Function-local so the names are created after StringName is ready.
 	static const StringName component_classes[] = {
 		"MonoBehaviour",
+		"SortingGroup",
 		"CollisionShape2D",
 		"CollisionPolygon2D",
 		"AnimationPlayer",

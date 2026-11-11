@@ -479,7 +479,13 @@ void ComponentListEditor::_add_component(Node *p_component, EditorInspector *p_r
 	EditorInspector *inspector = _create_sub_inspector(p_root);
 	// Like Unity, a component shows only its own settings: no transform, visibility or node settings.
 	// MonoBehaviour's "enabled" is the checkbox in the header.
-	inspector->set_hidden_property_classes({ SNAME("Node"), SNAME("CanvasItem"), SNAME("Node2D"), SNAME("MonoBehaviour") });
+	// Renderers keep their render settings (like a SpriteRenderer); "visible" is the header checkbox.
+	if (ComponentInspectorPlugin::is_renderer(p_component)) {
+		inspector->set_hidden_property_classes({ SNAME("Node"), SNAME("Node2D"), SNAME("MonoBehaviour") });
+		inspector->set_hidden_property_names({ SNAME("visible") });
+	} else {
+		inspector->set_hidden_property_classes({ SNAME("Node"), SNAME("CanvasItem"), SNAME("Node2D"), SNAME("MonoBehaviour") });
+	}
 	body->add_child(inspector);
 	inspector->edit(p_component);
 
@@ -488,7 +494,8 @@ void ComponentListEditor::_add_component(Node *p_component, EditorInspector *p_r
 }
 
 void ComponentListEditor::_add_advanced(Node *p_game_object, EditorInspector *p_root) {
-	// Node, canvas item and skew settings, which are rarely needed.
+	// Node and skew settings, which are rarely needed. (Group color and sorting are in the
+	// Sorting Group component, added only where needed.)
 	add_child(memnew(HSeparator));
 
 	Button *advanced = memnew(Button);
@@ -496,7 +503,7 @@ void ComponentListEditor::_add_advanced(Node *p_game_object, EditorInspector *p_
 	advanced->set_text(TTR("Advanced"));
 	advanced->set_text_alignment(HORIZONTAL_ALIGNMENT_LEFT);
 	advanced->set_focus_mode(FOCUS_NONE);
-	advanced->set_tooltip_text(TTR("Visibility, ordering, material, process and other node settings."));
+	advanced->set_tooltip_text(TTR("Process, physics interpolation and other node settings."));
 	advanced->set_button_icon(_fold_icon(this, advanced_folded));
 	advanced->add_theme_font_override(SNAME("font"), get_theme_font(SNAME("bold"), EditorStringName(EditorFonts)));
 	add_child(advanced);
@@ -507,7 +514,8 @@ void ComponentListEditor::_add_advanced(Node *p_game_object, EditorInspector *p_
 	add_child(body);
 
 	EditorInspector *inspector = _create_sub_inspector(p_root);
-	inspector->set_shown_property_classes({ SNAME("Node"), SNAME("CanvasItem"), SNAME("Node2D") });
+	// Render settings are in the renderer's own section or in the Sorting Group section.
+	inspector->set_shown_property_classes({ SNAME("Node"), SNAME("Node2D") });
 	inspector->set_hidden_property_names({ SNAME("position"), SNAME("rotation"), SNAME("scale") }); // In the Transform section.
 	inspector->set_hide_metadata(false);
 	body->add_child(inspector);
@@ -626,6 +634,24 @@ void ComponentListEditor::_notification(int p_what) {
 
 /////////////////////////////////////////////////////////////////////////////
 // ComponentInspectorPlugin
+
+bool ComponentInspectorPlugin::is_renderer(const Object *p_object) {
+	if (!Object::cast_to<CanvasItem>(p_object) || p_object->get_class() == "Node2D") {
+		return false;
+	}
+	static const char *non_drawing[] = {
+		"CollisionObject2D", "CollisionShape2D", "CollisionPolygon2D", "Camera2D", "Marker2D", "RemoteTransform2D",
+		"AudioStreamPlayer2D", "AudioListener2D", "VisibleOnScreenNotifier2D", "NavigationRegion2D", "NavigationLink2D",
+		"NavigationObstacle2D", "NavigationAgent2D", "Path2D", "PathFollow2D", "Skeleton2D", "Bone2D", "Joint2D",
+		"RayCast2D", "ShapeCast2D", "BackBufferCopy", "CanvasModulate", "Parallax2D", "TouchScreenButton",
+	};
+	for (const char *class_name : non_drawing) {
+		if (p_object->is_class(class_name)) {
+			return false;
+		}
+	}
+	return true;
+}
 
 bool ComponentInspectorPlugin::can_handle(Object *p_object) {
 	// Every game object of the edited scene gets the header and the list, even an empty one,
