@@ -251,7 +251,7 @@ void ProjectManager::_update_theme(bool p_skip_creation) {
 		title_bar_logo->set_button_icon(get_editor_theme_icon("TitleBarLogo"));
 
 		_set_main_view_icon(MAIN_VIEW_PROJECTS, get_editor_theme_icon("ProjectList"));
-		_set_main_view_icon(MAIN_VIEW_ASSETLIB, get_editor_theme_icon("AssetStore"));
+		// Orostride: no Asset Store view.
 
 		// Project list.
 		{
